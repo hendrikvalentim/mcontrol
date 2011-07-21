@@ -1,0 +1,12 @@
+Minecraft/Craftbukkit control script
+
+  * Start/Stop/Restart
+  * Status
+  * inkrementelles Backup; beim ersten Start jeden Tag wird ein Vollbackup des Servers erstellt, für den Rest des Tages dann nur noch inkrementelle Backups (also nur das, was sich im Vergleich zum vorherigen Backup auch geändert hat).
+    * Für inkrementelle Backups kann entweder **[[http://www.gnu.org/software/tar/manual/html_node/|tar]]** oder **[[http://www.nongnu.org/rdiff-backup/|rdiff-backup]]** verwendet werden; die Einstellung heisst BACKUPSYSTEM und findet sich am Anfang von **mcontrol.sh**.
+    * **tar** ist auf jedem System bereits vorinstalliert für jeden Tag wird ein eigener Ordner erstellt; die handhabung beim Restore ist etwas schwieriger als bei rdiff-backup.
+    * **rdiff-backup** verwendet immer denselben Backupordner und legt dort seine differenziellen Backups ab. Man kann sehr einfach einen bestimmten Zeitpunkt wiederherstellen. Diese Einstellung wird für "Anfänger" empfohlen.\\ Ausserdem verbraucht rdiff sehr viel weniger Platz für die Backups, da es lediglich die Unterschiede von Dateien komprimiert ablegt, während tar die ganze Datei erneut ablegt. Wenn also tar im Durschschnitt für jedes neue differenzielle Backup zwischen 30-80 MiB verbraucht, verbraucht rdiff-backup zwischen 3-11 MiB :)
+  * Solange eine bestimmte Datei existiert, startet der Server nicht.
+  * Befehle an einen Server senden, z.B. say oder administrative Dinge.
+
+
