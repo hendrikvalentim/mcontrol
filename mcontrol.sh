@@ -1,6 +1,6 @@
 #!/bin/bash
 # Website: http://wiki.natenom.name/minecraft/serverscript
-# Version 0.0.6 - 2011-07-21
+# Version 0.0.7 - 2011-07-31
 # Natenom natenom@natenom.name
 # License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 #
@@ -11,6 +11,8 @@
 # + improve check if server is running
 # + usage of Vars instead of using same shit again and again :/
 # + optional quota support (extra script)
+
+LC_LANG=C
 
 ############# Settings #####################
 QUOTA_HANDLER="/usr/local/bin/backupquota3.sh" #handles Backup Quota ...
@@ -43,6 +45,36 @@ INVOCATION="java -Xincgc -Xmx${MAX_GB}G -jar ${JAR_FILE}"
 #INVOCATION="java -Xincgc -Xmx1G -jar ${JAR_FILE}"
 #	;;
 #esac
+
+function check_quota() {
+#uses only lines with xx GB
+        local quota=$1
+
+        RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*([0-9]+\.[0-9]{2}) GB$/\1 \3/p' )
+        IFS='
+'
+        for i in $RDIFFBACKUP_LIST
+        do  
+                local BACKUPNUMBER=$(($(echo $i | cut -d' ' -f1)-2))
+                #-2 weil die ersten beiden Zeilen Ueberschrift und Trennlinie sind.
+            
+                local CUMMULSIZE=$(echo $i | cut -d' ' -f2)
+            
+                #umrechnen in MiBytes und die nachkommestellen abschneiden
+                local SIZE_MiB=$(echo "$CUMMULSIZE * 1024" | bc -q | sed -nr -e 's/^(.*)\..*$/\1/p')
+            
+                #printf "BackupNr: %s, SizeMiB: %s\n" "$BACKUPNUMBER" "$SIZE_MiB"
+                if [ $SIZE_MiB -gt $quota ];
+                then
+                        #echo "loeschen ab backupnr $BACKUPNUMBER"
+			#BACKUPNUMBER is now the first backup that breaks quota; return BACKUPNUMBER-1 to remove it.
+                        echo $(($BACKUPNUMBER-1))
+			return 0
+                fi  
+        done
+	return 1 #something went wrong...
+}
+
 
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
@@ -164,6 +196,16 @@ function mc_backup() {
 	  ;;
 	rdiff)
 	   rdiff-backup "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	
+	   #now check if within quota; a very simple implementation; works only if running always; will not delete more than one old backup...bla
+	   local REMOVE_STARTING_AT=$(check_quota ${BACKUP_QUOTA_MiB})
+	   if [ ! -z "${REMOVE_STARTING_AT}" ]
+	   then
+		rdiff-backup --remove-older-than ${REMOVE_STARTING_AT}B "${BACKUPDIR}/${SERVERNAME}-rdiff" #If something goes really wrong, rdiff-backup deletes only one backup per call ... if not used with --force
+	   else
+ 	 	echo "Quota OK. (If you are sure, that quota bla, check function quota_check.)"
+	   fi
+
 	  ;;
    esac
 }
