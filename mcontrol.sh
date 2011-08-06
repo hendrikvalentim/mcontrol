@@ -1,22 +1,16 @@
 #!/bin/bash
-# Website: http://wiki.natenom.name/minecraft/serverscript
-# Version 0.0.7 - 2011-07-31
+# Website: http://wiki.natenom.name/minecraft/mcontrol
+# Version 0.0.8 - 2011-08-06
 # Natenom natenom@natenom.name
 # License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 #
 # Based on Script taken from http://www.minecraftwiki.net/wiki/Server_startup_script version 0.3.2 2011-01-27 (YYYY-MM-DD)
 # Original License: Attribution-NonCommercial-ShareAlike 3.0 Unported
-#
-# + MultiServer kompatibel, auch pro Benutzer
-# + improve check if server is running
-# + usage of Vars instead of using same shit again and again :/
-# + optional quota support (extra script)
-
-LC_LANG=C
 
 ############# Settings #####################
-QUOTA_HANDLER="/usr/local/bin/backupquota3.sh" #handles Backup Quota ...
+QUOTA_HANDLER_FOR_TAR="/usr/local/bin/backupquota3.sh" #handles Backup Quota for usage of BACKUPSYSTEM="tar".
 
+# Default backup system, if not specified in serversettings.
 # Can be "tar" or "rdiff"
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
 BACKUPSYSTEM="tar"
@@ -25,6 +19,8 @@ BACKUPSYSTEM="tar"
 
 ############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
+LC_LANG=C
+
 #Read user settings from /etc/minecraft-server/<username>/<servername>
 SETTINGS_FILE=${1}
 
@@ -78,7 +74,7 @@ function check_quota() {
 
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
-    /bin/bash -c "$1"
+    /bin/bash -c "$1" 
   else
     su - ${RUNAS} -c "$1"
   fi
@@ -141,6 +137,18 @@ function mc_saveon() {
 	fi
 }
 
+function get_server_pid() {
+		#get pid of screen
+		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID}"  | awk '{ print $1 }')
+
+		if [ ! -z "$pid_server_screen" ]
+		then
+		    #We use one screen per server, get all processes with ppid of pid_server_screen
+		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)
+		    echo ${pid_server}
+		fi
+}
+
 function mc_stop() {
         if is_running
         then
@@ -157,6 +165,16 @@ function mc_stop() {
  	if is_running
         then
                 echo "${JAR_FILE} could not be shut down... still running."
+		echo "Forcing server to stop ... kill :P ..."
+		local pid_server=$(get_server_pid)
+		as_user "kill -9 $pid_server"
+		if [ $? ]
+		then
+			echo "Successfully killed -9 $pid_server"
+			echo "${JAR_FILE} is shut down (forced)."
+		else
+			echo "Check that ... could not kill -9 $pid_server"
+		fi
         else
                 echo "${JAR_FILE} is shut down."
         fi
@@ -188,7 +206,7 @@ function mc_backup() {
 
 	   #Etwas anders ..., da wir erst die Datei ablegen und dann eventuell loeschen um Quota einzuhalten, aber funktioniert :)
 	   # !!! Every Server should have its own Backupdirectory..., sonst gilt ein Quota fuer die Backupverzeichnisse aller Server :P !!!
-	   if [ -f "${QUOTA_HANDLER}" ]
+	   if [ -f "${QUOTA_HANDLER_FOR_TAR}" ]
 	   then
 	       . /usr/local/bin/backupquota3.sh
 	       as_user "checkdir '${BACKUPDIR}' '${BACKUP_QUOTA_MiB}' '${TAR_FILE}'" #nach diesem Aufruf ist sicher gestellt, dass mitsamt neuer Datei das Quota unterschritten bleibt :)
@@ -264,6 +282,9 @@ case "${2}" in
 		screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${3}\r")"
 	fi
     ;;
+  pid)
+	get_server_pid
+    ;;
   *)cat << EOHELP
 Usage: ${0} SETTINGS_FILE OPTION [ARGUMENT]
 For example: ${0} /etc/minecraft-server/userx/serverx-bukkit status
@@ -276,6 +297,7 @@ OPTIONS
     listbackups        List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
     status             Prints current status of the server (online/offline)
     sendcommand|sc|c   Send command to the server given as [ARGUMENT]
+    pid		       Get pid of a server process.
 
 EXAMPLES
     Send a message to all players on the server:
