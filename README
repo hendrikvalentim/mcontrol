@@ -3,3 +3,22 @@ Bitte im Wiki lesen: http://wiki.natenom.name/minecraft/mcontrol
 
 Dieses Script basiert auf http://www.minecraftwiki.net/wiki/Server_startup_script (Version 0.3.2 2011-01-27).
 Wie auch das Original liegt dieses abgeleitete Script unter der Lizenz http://creativecommons.org/licenses/by-nc-sa/3.0/ (CC Attribution-NonCommercial-ShareAlike 3.0 Unported).
+
+
+Usage: /home/minecraft/mcontrol SETTINGS_FILE OPTION [ARGUMENT]
+For example: /home/minecraft/mcontrol /etc/minecraft-server/userx/serverx-bukkit status
+
+OPTIONS
+    start              Start the server.
+    stop               Stop the server.
+    restart            Restart the server.
+    backup             Backup the server.
+    listbackups        List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
+    status             Prints current status of the server (online/offline)
+    sendcommand|sc|c   Send command to the server given as [ARGUMENT]
+    pid                Get pid of a server process.
+
+EXAMPLES
+    Send a message to all players on the server:
+    /home/minecraft/mcontrol SETTINGS_FILE sendcommand "say We are watching you :P"
+
