@@ -46,7 +46,7 @@ function check_quota() {
 #uses only lines with xx GB
         local quota=$1
 
-        RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*([0-9]+\.[0-9]{2}) GB$/\1 \3/p' )
+	RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*MB[^0-9]+([0-9]{1,3}\.[0-9]{1,2}) GB$/\1 \3/p')
         IFS='
 '
         for i in $RDIFFBACKUP_LIST
