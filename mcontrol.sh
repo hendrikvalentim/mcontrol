@@ -1,6 +1,6 @@
 #!/bin/bash
 # Website: http://wiki.natenom.name/minecraft/mcontrol
-# Version 0.0.8 - 2011-08-06
+# Version 0.0.10 - 2012-01-28
 # Natenom natenom@natenom.name
 # License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 #
@@ -30,23 +30,16 @@ SETTINGS_FILE=${1}
 . "${SETTINGS_FILE}"
 
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
-INVOCATION="java -Xincgc -Xmx${MAX_GB}G -jar ${JAR_FILE}"
+INVOCATION="java -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_GB} -jar ${JAR_FILE}"
 
-#FIXME
-#case ${SERVER_TYPE} in
-#    vanilla)
 #        #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
-#	;;
-#    bukkit)
-#INVOCATION="java -Xincgc -Xmx1G -jar ${JAR_FILE}"
-#	;;
-#esac
 
 function check_quota() {
 #uses only lines with xx GB
+# very hacky ... neu und schoen machen :)
         local quota=$1
 
-	RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*MB[^0-9]+([0-9]{1,3}\.[0-9]{1,2}) GB$/\1 \3/p')
+        RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*MB[^0-9]+([0-9]{1,3}\.[0-9]{1,2}) GB$/\1 \3/p') 
         IFS='
 '
         for i in $RDIFFBACKUP_LIST
@@ -81,7 +74,7 @@ function as_user() {
 }
 
 function is_running() {
-   if ps aux | grep -v grep | grep SCREEN | grep "${MCSERVERID}" >/dev/null 2>&1
+   if ps aux | grep -v grep | grep SCREEN | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
    then
      return 0 #is running, exit level 0 for everythings fine...
    else
@@ -93,12 +86,12 @@ function is_running() {
 function mc_start() {
   if is_running 
   then
-    echo "Tried to start but ${JAR_FILE} was already running!"
+    echo "Tried to start but ${JAR_FILE} is already running!"
   elif [ -f "${SERVERDIR}/${DONT_START}" ]
   then
     echo "Tried to start but ${DONT_START} exists."
   else
-    echo "${JAR_FILE} was not running... starting."
+    echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
     as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${INVOCATION}"
     sleep 3
@@ -139,19 +132,21 @@ function mc_saveon() {
 
 function get_server_pid() {
 		#get pid of screen
-		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID}"  | awk '{ print $1 }')
+		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+
 
 		if [ ! -z "$pid_server_screen" ]
 		then
 		    #We use one screen per server, get all processes with ppid of pid_server_screen
-		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)
+		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2) 
 		    echo ${pid_server}
 		fi
 }
 
-function mc_stop() {
+function mc_stop() { #Nach dieser Funktion muss der Server tot sein, sonst gibt es Probleme...
         if is_running
         then
+		#Give the server some time to shutdown itself.
                 echo "${JAR_FILE} is running... stopping."
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say Server wird in 10 Sekunden heruntergefahren. Map wird gesichert...\"\015'"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
@@ -162,22 +157,30 @@ function mc_stop() {
                 echo "${JAR_FILE} was not running."
         fi
 
- 	if is_running
-        then
+	local _count=0
+ 	while is_running #If the server is still running, kill it.
+	do
                 echo "${JAR_FILE} could not be shut down... still running."
 		echo "Forcing server to stop ... kill :P ..."
 		local pid_server=$(get_server_pid)
+		echo "Killing pid $pid_server"
 		as_user "kill -9 $pid_server"
 		if [ $? ]
 		then
-			echo "Successfully killed -9 $pid_server"
-			echo "${JAR_FILE} is shut down (forced)."
+			echo "Successfully killed ${JAR_FILE} (pid $pid_server)."
 		else
 			echo "Check that ... could not kill -9 $pid_server"
 		fi
-        else
-                echo "${JAR_FILE} is shut down."
-        fi
+
+		#noch laufende Screen-Sitzungen beenden
+		as_user "screen -wipe"
+
+		_count=$(($count+1))
+		if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
+			echo "Server could not be killed... after 10 tries..."
+			break
+		fi
+        done
 }
 
 function mc_backup() {
@@ -202,7 +205,7 @@ function mc_backup() {
 
 	   #Create backup tar.
 	   TAR_FILE="${THISBACKUP}/${SERVERNAME}.${TIME}.${BACKUP_TYPE}.tar"
-	   as_user "cd && tar -cvf '${TAR_FILE}' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
+	   as_user "cd && tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 
 	   #Etwas anders ..., da wir erst die Datei ablegen und dann eventuell loeschen um Quota einzuhalten, aber funktioniert :)
 	   # !!! Every Server should have its own Backupdirectory..., sonst gilt ein Quota fuer die Backupverzeichnisse aller Server :P !!!
@@ -213,13 +216,15 @@ function mc_backup() {
 	   fi
 	  ;;
 	rdiff)
-	   rdiff-backup "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 	
 	   #now check if within quota; a very simple implementation; works only if running always; will not delete more than one old backup...bla
 	   local REMOVE_STARTING_AT=$(check_quota ${BACKUP_QUOTA_MiB})
+	   echo "$REMOVE_STARTING_AT"
 	   if [ ! -z "${REMOVE_STARTING_AT}" ]
 	   then
-		rdiff-backup --remove-older-than ${REMOVE_STARTING_AT}B "${BACKUPDIR}/${SERVERNAME}-rdiff" #If something goes really wrong, rdiff-backup deletes only one backup per call ... if not used with --force
+		echo "Backup-Quota (\"${BACKUP_QUOTA_MiB}\") for this server is full. Deleting Increment entries older than entry number \"${REMOVE_STARTING_AT}\"."
+		rdiff-backup --force --remove-older-than ${REMOVE_STARTING_AT}B "${BACKUPDIR}/${SERVERNAME}-rdiff" #If something goes really wrong, rdiff-backup deletes only one backup per call ... if not used with --force
 	   else
  	 	echo "Quota OK. (If you are sure, that quota bla, check function quota_check.)"
 	   fi
@@ -239,6 +244,47 @@ function listbackups() {
 	fi
 }
 
+
+# Returns output like "2 9", which means: ID:2, 9 times.
+function lottery_rand() {
+	local _max_item_count=10
+	local id_list=/home/minecraft/id.list
+
+	local anzahl_items=$(wc -l ${id_list} | cut -d' ' -f 1)
+
+	local random_count=$((1+$RANDOM%$(($_max_item_count-1)))) #Anzahl der Items, 1 bis 10
+	local random_line=$((1+$RANDOM%${anzahl_items}))
+	local id_from_random_line=$(head -n ${random_line} ${id_list} | tail -n1)
+
+	echo $id_from_random_line ${random_count}
+}
+
+#Gives a named player the items from lottery_rand().
+function lottery() {
+    local zeugs=$(lottery_rand)
+    local give_id=$(echo $zeugs | cut -d' ' -f1)
+    local give_count=$(echo $zeugs | cut -d' ' -f2)
+
+    local name=$1
+    
+    #get name for our item
+    #wir brauchen die ID ohne eventuelles :x
+    local _cleared_give_id=$(echo ${give_id} | cut -d':' -f1)
+    local name_for_id=$(grep "^${_cleared_give_id}:" /home/minecraft/id.list-names | cut -d':' -f2)
+    
+    sendcommand "say Gewinn fuer ${name}: ${give_count} ${name_for_id}($give_id)."
+    sendcommand "give ${name} ${zeugs}"
+    echo -en "Name: ${name}\nAnzahl: ${give_count}\nBezeichnung(ID): ${name_for_id}(${give_id})\nDone.\n"
+
+}
+
+function sendcommand() {
+	if is_running
+        then
+                screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${1}\r")"
+	fi  
+}
+
 #Start-Stop here
 case "${2}" in
   start)
@@ -253,6 +299,9 @@ case "${2}" in
   restart)
     mc_stop
     mc_start
+    ;;
+  lottery)
+    lottery "${3}"
     ;;
   listbackups)
     listbackups
@@ -277,10 +326,7 @@ case "${2}" in
     fi
     ;;
   sendcommand|sc|c)
-	if is_running
-	then
-		screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${3}\r")"
-	fi
+	sendcommand "${3}"
     ;;
   pid)
 	get_server_pid
@@ -290,14 +336,15 @@ Usage: ${0} SETTINGS_FILE OPTION [ARGUMENT]
 For example: ${0} /etc/minecraft-server/userx/serverx-bukkit status
 
 OPTIONS
-    start              Start the server.
-    stop               Stop the server.
-    restart            Restart the server.
-    backup             Backup the server.
-    listbackups        List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
-    status             Prints current status of the server (online/offline)
-    sendcommand|sc|c   Send command to the server given as [ARGUMENT]
-    pid		       Get pid of a server process.
+    start                 Start the server.
+    stop                  Stop the server.
+    restart               Restart the server.
+    backup                Backup the server.
+    listbackups           List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
+    status                Prints current status of the server (online/offline)
+    sendcommand|sc|c      Send command to the server given as [ARGUMENT]
+    lottery <playername>  Gives a player a random count of a random item. (Player must have a free inventory slot.)
+    pid		          Get pid of a server process.
 
 EXAMPLES
     Send a message to all players on the server:
