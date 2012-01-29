@@ -7,16 +7,16 @@ Wie auch das Original liegt dieses abgeleitete Script unter der Lizenz http://cr
 
 Usage: /home/minecraft/mcontrol SETTINGS_FILE OPTION [ARGUMENT]
 For example: /home/minecraft/mcontrol /etc/minecraft-server/userx/serverx-bukkit status
-
 OPTIONS
-    start              Start the server.
-    stop               Stop the server.
-    restart            Restart the server.
-    backup             Backup the server.
-    listbackups        List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
-    status             Prints current status of the server (online/offline)
-    sendcommand|sc|c   Send command to the server given as [ARGUMENT]
-    pid                Get pid of a server process.
+    start                 Start the server.
+    stop                  Stop the server.
+    restart               Restart the server.
+    backup                Backup the server.
+    listbackups           List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
+    status                Prints current status of the server (online/offline)
+    sendcommand|sc|c      Send command to the server given as [ARGUMENT]
+    lottery <playername>  Gives a player a random count of a random item. (Player must have a free inventory slot.)
+    pid                   Get pid of a server process.
 
 EXAMPLES
     Send a message to all players on the server:
