@@ -7,8 +7,6 @@
 # Based on Script taken from http://www.minecraftwiki.net/wiki/Server_startup_script version 0.3.2 2011-01-27 (YYYY-MM-DD)
 # Original License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 ############# Settings #####################
-QUOTA_HANDLER_FOR_TAR="/usr/local/bin/backupquota3.sh" #handles Backup Quota for usage of BACKUPSYSTEM="tar".
-
 # Default backup system, if not specified in serversettings.
 # Can be "tar" or "rdiff"
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
@@ -229,14 +227,6 @@ function mc_backup() {
 	   #Create backup tar.
 	   TAR_FILE="${THISBACKUP}/${SERVERNAME}.${TIME}.${BACKUP_TYPE}.tar"
 	   as_user "cd && tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
-
-	   #Etwas anders ..., da wir erst die Datei ablegen und dann eventuell loeschen um Quota einzuhalten, aber funktioniert :)
-	   # !!! Every Server should have its own Backupdirectory..., sonst gilt ein Quota fuer die Backupverzeichnisse aller Server :P !!!
-	   if [ -f "${QUOTA_HANDLER_FOR_TAR}" ]
-	   then
-	       . /usr/local/bin/backupquota3.sh
-	       as_user "checkdir '${BACKUPDIR}' '${BACKUP_QUOTA_MiB}' '${TAR_FILE}'" #nach diesem Aufruf ist sicher gestellt, dass mitsamt neuer Datei das Quota unterschritten bleibt :)
-	   fi
 	  ;;
 	rdiff)
 	   rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
