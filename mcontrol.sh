@@ -308,10 +308,9 @@ case "${2}" in
 	get_server_pid
     ;;
   *)cat << EOHELP
-Usage: ${0} SETTINGS_FILE OPTION [ARGUMENT]
-For example: ${0} /etc/minecraft-server/userx/serverx sc "give natenom 322 100"
+Usage: ${0} SETTINGS_FILE COMMAND [ARGUMENT]
 
-OPTIONS
+COMMANDS
     start                 Start the server.
     stop                  Stop the server.
     restart               Restart the server.
@@ -325,6 +324,10 @@ OPTIONS
 EXAMPLES
     Send a message to all players on the server:
     ${0} SETTINGS_FILE sendcommand "say We are watching you :P"
+
+    Give me some golden apples:
+    ${0} /etc/minecraft-server/userx/serverx sendcommand "give yourname 322 100"
+
 
 EOHELP
     exit 1

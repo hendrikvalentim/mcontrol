@@ -5,9 +5,9 @@ Dieses Script basiert auf http://www.minecraftwiki.net/wiki/Server_startup_scrip
 Wie auch das Original liegt dieses abgeleitete Script unter der Lizenz http://creativecommons.org/licenses/by-nc-sa/3.0/ (CC Attribution-NonCommercial-ShareAlike 3.0 Unported).
 
 
-Usage: /home/minecraft/mcontrol SETTINGS_FILE OPTION [ARGUMENT]
-For example: /home/minecraft/mcontrol /etc/minecraft-server/userx/serverx-bukkit status
-OPTIONS
+Usage: mcontrol.sh SETTINGS_FILE COMMAND [ARGUMENT]
+
+COMMANDS
     start                 Start the server.
     stop                  Stop the server.
     restart               Restart the server.
@@ -20,5 +20,7 @@ OPTIONS
 
 EXAMPLES
     Send a message to all players on the server:
-    /home/minecraft/mcontrol SETTINGS_FILE sendcommand "say We are watching you :P"
-
+    mcontrol.sh SETTINGS_FILE sendcommand "say We are watching you :P"
+    
+    Give me some golden apples:
+    mcontrol.sh /etc/minecraft-server/userx/serverx sendcommand "give yourname 322 100"
