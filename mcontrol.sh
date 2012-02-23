@@ -32,10 +32,9 @@ INVOCATION="java -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_GB} -jar ${J
 
 
 
-### FUUUU check_qouta() ... :/
-# This will be an easy implementation of quota:
+# This is an easy implementation of quota:
 #  - check size of all backups with du -s ...
-#  - if size>quota, then start remove-loop and remove so long the oldest backup, until size<quota
+#  - if size>quota, then start remove-loop and remove so long the oldest backup, until size<=quota
 #   sooo einfach :)
 function trim_to_quota() {
 	local quota=$1
@@ -54,37 +53,6 @@ function trim_to_quota() {
 	done
 	echo "Total backup size (${_size_of_all_backups} MiB) is less or equal quota ($quota MiB)."
 }
-
-#function check_quota() {
-##uses only lines with xx GB
-## very hacky ... neu und schoen machen :)
-#        local quota=$1
-#
-#        RDIFFBACKUP_LIST=$(rdiff-backup --list-increment-sizes ${BACKUPDIR}/${SERVERNAME}-rdiff | sed = - | sed 'N;s/\n/\t/' | sed -nr -e 's/^([0-9]+).*([a-zA-Z]{3} [a-zA-Z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}).*MB[^0-9]+([0-9]{1,3}\.[0-9]{1,2}) GB$/\1 \3/p') 
-#        IFS='
-#'
-#        for i in $RDIFFBACKUP_LIST
-#        do  
-#                local BACKUPNUMBER=$(($(echo $i | cut -d' ' -f1)-2))
-#                #-2 weil die ersten beiden Zeilen Ueberschrift und Trennlinie sind.
-#            
-#                local CUMMULSIZE=$(echo $i | cut -d' ' -f2)
-#            
-#                #umrechnen in MiBytes und die nachkommestellen abschneiden
-#                local SIZE_MiB=$(echo "$CUMMULSIZE * 1024" | bc -q | sed -nr -e 's/^(.*)\..*$/\1/p')
-#            
-#                #printf "BackupNr: %s, SizeMiB: %s\n" "$BACKUPNUMBER" "$SIZE_MiB"
-#                if [ $SIZE_MiB -gt $quota ];
-#                then
-#                        #echo "loeschen ab backupnr $BACKUPNUMBER"
-#			#BACKUPNUMBER is now the first backup that breaks quota; return BACKUPNUMBER-1 to remove it.
-#                        echo $(($BACKUPNUMBER-1))
-#			return 0
-#                fi  
-#        done
-#	return 1 #something went wrong...
-#}
-
 
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
@@ -232,17 +200,6 @@ function mc_backup() {
 	   rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
-#	   #now check if within quota; a very simple implementation; works only if running always; will not delete more than one old backup...bla
-#	   local REMOVE_STARTING_AT=$(check_quota ${BACKUP_QUOTA_MiB})
-#	   echo "$REMOVE_STARTING_AT"
-#	   if [ ! -z "${REMOVE_STARTING_AT}" ]
-#	   then
-#		echo "Backup-Quota (\"${BACKUP_QUOTA_MiB}\") for this server is full. Deleting Increment entries older than entry number \"${REMOVE_STARTING_AT}\"."
-#		nice -n19 rdiff-backup --force --remove-older-than ${REMOVE_STARTING_AT}B "${BACKUPDIR}/${SERVERNAME}-rdiff" #If something goes really wrong, rdiff-backup deletes only one backup per call ... if not used with --force
-#	   else
-# 	 	echo "Quota OK. (If you are sure, that quota bla, check function quota_check.)"
-#	   fi
-
 	  ;;
    esac
 }
