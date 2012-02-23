@@ -19,7 +19,11 @@ BACKUPSYSTEM="rdiff"
 
 ############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
+#This is important to have always the same output format.
 LC_LANG=C
+
+MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages.
+# C or empty for Default.
 
 #Read user settings from /etc/minecraft-server/<username>/<servername>
 SETTINGS_FILE=${1}
@@ -59,9 +63,9 @@ function trim_to_quota() {
 
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
-    /bin/bash -c "export LC_ALL=de_DE.UTF-8 && $1" 
+    /bin/bash -c "export LC_ALL=${MC_SERVER_LANG} && $1" 
   else
-    su - ${RUNAS} -c "export LC_ALL=de_DE.UTF-8 && $1"
+    su - ${RUNAS} -c "export LC_ALL=${MC_SERVER_LANG} && $1"
   fi
 }
 
