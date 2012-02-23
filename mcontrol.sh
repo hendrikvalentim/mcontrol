@@ -6,12 +6,16 @@
 #
 # Based on Script taken from http://www.minecraftwiki.net/wiki/Server_startup_script version 0.3.2 2011-01-27 (YYYY-MM-DD)
 # Original License: Attribution-NonCommercial-ShareAlike 3.0 Unported
+
 ############# Settings #####################
 # Default backup system, if not specified in serversettings.
 # Can be "tar" or "rdiff"
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
 BACKUPSYSTEM="rdiff"
 ########### End: Settings ##################
+
+
+
 
 ############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
@@ -29,7 +33,6 @@ MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send comm
 INVOCATION="java -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_GB} -jar ${JAR_FILE}"
 
 #        #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
-
 
 
 # This is an easy implementation of quota:
@@ -132,7 +135,8 @@ function get_server_pid() {
 		fi
 }
 
-function mc_stop() { #Nach dieser Funktion muss der Server tot sein, sonst gibt es Probleme...
+# After this function the server must be offline; if not you get serious problems :P
+function mc_stop() { 
         if is_running
         then
 		#Give the server some time to shutdown itself.
@@ -182,12 +186,13 @@ function mc_backup() {
 	   # Wenn fuer den aktuellen Tag noch kein Verzeichnis existiert, dann legen wir es an und machen ein initiales komplettes Backup.
 	   # Existiert der Ordner bereits, dann koennen wir davon ausgehen, dass ein Komplettbackup existiert und auch eine snapshot datei und machen ein inkrementelles Backup.
 
+	   # There is no quota-support for BACKUPSYSTEM=tar.
+
 	   DATE=$(date "+%Y-%m-%d")
 	   TIME=$(date "+%H-%M-%S")
 	   THISBACKUP="${BACKUPDIR}/${DATE}" #Our current backup destiny.
 
 	   [ -d "${THISBACKUP}" ] || mkdir -p "${THISBACKUP}" # Create daily directory if it does not exist.
-
 
 	   TAR_SNAP_FILE="${THISBACKUP}/${SERVERNAME}.snap" #Snapshot file for tar, with meta information.
 	   [ -f "${TAR_SNAP_FILE}" ] && BACKUP_TYPE="inc" || BACKUP_TYPE="full" #If DIR for today exists, do incremental, else full backup.
@@ -304,7 +309,7 @@ case "${2}" in
     ;;
   *)cat << EOHELP
 Usage: ${0} SETTINGS_FILE OPTION [ARGUMENT]
-For example: ${0} /etc/minecraft-server/userx/serverx-bukkit status
+For example: ${0} /etc/minecraft-server/userx/serverx sc "give natenom 322 100"
 
 OPTIONS
     start                 Start the server.
@@ -323,7 +328,6 @@ EXAMPLES
 
 EOHELP
     exit 1
-
   ;;
 esac
 
