@@ -1,6 +1,5 @@
 #!/bin/bash
 # Website: http://wiki.natenom.name/minecraft/mcontrol
-# Version 0.0.11 - 2012-02-23
 # Natenom natenom@natenom.name
 # License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 #
