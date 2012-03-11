@@ -31,7 +31,7 @@ SETTINGS_FILE=${1}
 #FIXME
 
 IONICE="ionice -c 3"
-
+RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
 
 . "${SETTINGS_FILE}"
 
@@ -91,7 +91,7 @@ function mc_start() {
   else
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
-    as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${INVOCATION}"
+    as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_NICE} ${INVOCATION}"
     sleep 3
 
     if is_running
