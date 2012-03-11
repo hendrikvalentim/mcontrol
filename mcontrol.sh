@@ -30,7 +30,7 @@ SETTINGS_FILE=${1}
 #Check if settings file is in /etc/minecraft-server
 #FIXME
 
-IONICE="ionice -c 3"
+IONICE="ionice -c 3" #only relevant for backup
 RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
 
 . "${SETTINGS_FILE}"
