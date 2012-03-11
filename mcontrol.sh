@@ -32,6 +32,7 @@ SETTINGS_FILE=${1}
 
 IONICE="ionice -c 3" #only relevant for backup
 RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
+RUNBACKUP_NICE="nice -n19"   #run Backup with nicelevel (complete command needed, e.g. RUNBACKUP_NICE="nice -n19")
 
 . "${SETTINGS_FILE}"
 
@@ -56,7 +57,7 @@ function trim_to_quota() {
 		echo "Total backup size of ${_size_of_all_backups} MiB has reached quota of $quota MiB."
 		local _increment_count=$(($(rdiff-backup --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
 		echo "  going to --remove-older-than $((${_increment_count}-1))B"
-		nice -n19 ${IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
+		${RUNBACKUP_NICE} ${IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
 		echo "  Removed."
 		_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
 	done
@@ -205,10 +206,10 @@ function mc_backup() {
 
 	   #Create backup tar.
 	   TAR_FILE="${THISBACKUP}/${SERVERNAME}.${TIME}.${BACKUP_TYPE}.tar"
-	   as_user "cd && ${IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
+	   as_user "cd && ${RUNBACKUP_NICE} ${IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 	  ;;
 	rdiff)
-	   ${IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   ${RUNBACKUP_NICE} ${IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
