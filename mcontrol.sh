@@ -30,6 +30,9 @@ SETTINGS_FILE=${1}
 #Check if settings file is in /etc/minecraft-server
 #FIXME
 
+IONICE="ionice -c 3"
+
+
 . "${SETTINGS_FILE}"
 
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
@@ -53,7 +56,7 @@ function trim_to_quota() {
 		echo "Total backup size of ${_size_of_all_backups} MiB has reached quota of $quota MiB."
 		local _increment_count=$(($(rdiff-backup --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
 		echo "  going to --remove-older-than $((${_increment_count}-1))B"
-		nice -n19 rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
+		nice -n19 ${IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
 		echo "  Removed."
 		_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
 	done
@@ -202,10 +205,10 @@ function mc_backup() {
 
 	   #Create backup tar.
 	   TAR_FILE="${THISBACKUP}/${SERVERNAME}.${TIME}.${BACKUP_TYPE}.tar"
-	   as_user "cd && tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
+	   as_user "cd && ${IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 	  ;;
 	rdiff)
-	   rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   ${IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
