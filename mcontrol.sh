@@ -30,9 +30,12 @@ SETTINGS_FILE=${1}
 #Check if settings file is in /etc/minecraft-server
 #FIXME
 
-IONICE="ionice -c 3" #only relevant for backup
 RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
+RUNSERVER_TASKSET="" #Set CPU affinity of a server with taskset command, e.g. TASKSET="taskset -c 1"
+
 RUNBACKUP_NICE="nice -n19"   #run Backup with nicelevel (complete command needed, e.g. RUNBACKUP_NICE="nice -n19")
+RUNBACKUP_IONICE="ionice -c 3" #only relevant for backup
+
 
 . "${SETTINGS_FILE}"
 
@@ -57,7 +60,7 @@ function trim_to_quota() {
 		echo "Total backup size of ${_size_of_all_backups} MiB has reached quota of $quota MiB."
 		local _increment_count=$(($(rdiff-backup --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
 		echo "  going to --remove-older-than $((${_increment_count}-1))B"
-		${RUNBACKUP_NICE} ${IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
+		${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
 		echo "  Removed."
 		_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
 	done
@@ -92,7 +95,7 @@ function mc_start() {
   else
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
-    as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_NICE} ${INVOCATION}"
+    as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
     sleep 3
 
     if is_running
@@ -206,10 +209,10 @@ function mc_backup() {
 
 	   #Create backup tar.
 	   TAR_FILE="${THISBACKUP}/${SERVERNAME}.${TIME}.${BACKUP_TYPE}.tar"
-	   as_user "cd && ${RUNBACKUP_NICE} ${IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
+	   as_user "cd && ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 	  ;;
 	rdiff)
-	   ${RUNBACKUP_NICE} ${IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
