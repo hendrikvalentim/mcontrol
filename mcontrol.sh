@@ -36,6 +36,9 @@ RUNSERVER_TASKSET="" #Set CPU affinity of a server with taskset command, e.g. TA
 RUNBACKUP_NICE="nice -n19"   #run Backup with nicelevel (complete command needed, e.g. RUNBACKUP_NICE="nice -n19")
 RUNBACKUP_IONICE="ionice -c 3" #only relevant for backup
 
+ID_LIST=/home/minecraft/id.list
+
+
 
 . "${SETTINGS_FILE}"
 
@@ -234,13 +237,11 @@ function listbackups() {
 # Returns output like "2 9", which means: ID:2, 9 times.
 function lottery_rand() {
 	local _max_item_count=10
-	local id_list=/home/minecraft/id.list
-
-	local anzahl_items=$(wc -l ${id_list} | cut -d' ' -f 1)
+	local anzahl_items=$(wc -l ${ID_LIST} | cut -d' ' -f 1)
 
 	local random_count=$((1+$RANDOM%$(($_max_item_count-1)))) #Anzahl der Items, 1 bis 10
 	local random_line=$((1+$RANDOM%${anzahl_items}))
-	local id_from_random_line=$(head -n ${random_line} ${id_list} | tail -n1)
+	local id_from_random_line=$(head -n ${random_line} ${ID_LIST} | tail -n1)
 
 	echo $id_from_random_line ${random_count}
 }
