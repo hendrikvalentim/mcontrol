@@ -72,9 +72,9 @@ function trim_to_quota() {
 
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
-    /bin/bash -c "export LC_ALL=${MC_SERVER_LANG} && $1" 
+    /bin/bash -c "$1" 
   else
-    su - ${RUNAS} -c "export LC_ALL=${MC_SERVER_LANG} && $1"
+    su - ${RUNAS} -c "$1"
   fi
 }
 
@@ -98,7 +98,7 @@ function mc_start() {
   else
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
-    as_user "cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
+    as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
     sleep 3
 
     if is_running
