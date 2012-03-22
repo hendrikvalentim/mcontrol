@@ -37,6 +37,7 @@ RUNBACKUP_NICE="nice -n19"   #run Backup with nicelevel (complete command needed
 RUNBACKUP_IONICE="ionice -c 3" #only relevant for backup
 
 ID_LIST=/home/minecraft/id.list
+ID_LIST_NAMES=/home/minecraft/id.list-names
 
 
 
@@ -257,7 +258,7 @@ function lottery() {
     #get name for our item
     #wir brauchen die ID ohne eventuelles :x
     local _cleared_give_id=$(echo ${give_id} | cut -d':' -f1)
-    local name_for_id=$(grep "^${_cleared_give_id}:" /home/minecraft/id.list-names | cut -d':' -f2)
+    local name_for_id=$(grep "^${_cleared_give_id}:" "${ID_LIST_NAMES}" | cut -d':' -f2)
     
     sendcommand "say Gewinn fuer ${name}: ${give_count} ${name_for_id}($give_id)."
     sendcommand "give ${name} ${zeugs}"
