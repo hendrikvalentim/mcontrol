@@ -200,6 +200,19 @@ function mc_backup() {
    [ -d "${BACKUPDIR}" ] || mkdir -p "${BACKUPDIR}"
    echo "Backing up ${MCSERVERID}."
 
+#   if is_ramdisk
+#   then
+##        if 
+#   	exit 1
+#   fi
+
+   if [ $(ls -A ${SERVERDIR}) ];
+   then
+       echo -e "Warning...\nSomething must be wrong, SERVERDIR(\"${SERVERDIR}\") is empty.\nWon't do a backup."
+       exit 1
+   fi
+
+
    case ${BACKUPSYSTEM} in
         tar)
 	   # Wir erstellen pro Tag ein Unterverzeichnis im Backupverzeichnis. Name ist das Datum. Falls dann quota voll ist, werden ja Verzeichnisse in der Hauptebene geloescht, also dann immer ganze Tagesbackups.
