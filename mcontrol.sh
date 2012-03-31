@@ -206,7 +206,7 @@ function mc_backup() {
 #   	exit 1
 #   fi
 
-   if [ $(ls -A ${SERVERDIR}) ];
+   if [ -z "$(ls -A ${SERVERDIR})" ];
    then
        echo -e "Warning...\nSomething must be wrong, SERVERDIR(\"${SERVERDIR}\") is empty.\nWon't do a backup."
        exit 1
