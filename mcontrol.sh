@@ -71,6 +71,12 @@ function trim_to_quota() {
 	echo "Total backup size (${_size_of_all_backups} MiB) is less or equal quota ($quota MiB)."
 }
 
+
+#Checks, if the serverdir is inside a ramdisk (tmpfs mountpoint)
+function is_ramdisk() {
+    stat -f ${SERVERDIR} | grep tmpfs
+}
+
 function as_user() {
   if [ "$(whoami)" = "${RUNAS}" ] ; then
     /bin/bash -c "$1" 
