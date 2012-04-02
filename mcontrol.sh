@@ -213,7 +213,7 @@ function sync_to_ramdisk() {
             fi
 	fi
     else
-        echo "This server does not run in a ramdisk."
+        echo "There is no ramdisk mounted in \"${SERVERDIR}\""
     fi
 }
 
@@ -233,7 +233,7 @@ function sync_from_ramdisk() {
 	    fi
 	fi
     else
-        echo "This server does not run in a ramdisk."
+    	echo "There is no ramdisk mounted in \"${SERVERDIR}\""
     fi
 }
 
