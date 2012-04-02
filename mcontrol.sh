@@ -71,10 +71,9 @@ function trim_to_quota() {
 	echo "Total backup size (${_size_of_all_backups} MiB) is less or equal quota ($quota MiB)."
 }
 
-
 #Checks, if the serverdir is inside a ramdisk (tmpfs mountpoint)
 function is_ramdisk() {
-    stat -f ${SERVERDIR} | grep tmpfs
+    stat -f ${SERVERDIR} | grep tmpfs >/dev/null 2>&1
 }
 
 function as_user() {
@@ -194,6 +193,39 @@ function mc_stop() {
 			break
 		fi
         done
+}
+
+# If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
+function sync_to_ramdisk() {
+
+#FIXME check if SERVERDIR_PRERUN is set and valid
+
+    if is_ramdisk
+    then
+        if [ -z "$(ls -A ${SERVERDIR_PRERUN})" ];
+        then
+	    echo "Error, SERVERDIR_PRERUN(${SERVERDIR_PRERUN}) is empty, it sould NOT be."
+	else
+	    as_user "echo rsync \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+	fi
+    else
+        echo "This server does not run in a ramdisk."
+    fi
+}
+
+# If a server runs in a ramdisk, copy the content of SERVERDIR to SERVERDIR_PRERUN
+function sync_from_ramdisk() {
+    if is_ramdisk
+    then
+        if [ -z "$(ls -A ${SERVERDIR})" ];
+	then
+	    echo "Error, SERVERDIR(${SERVERDIR}) is empty, it sould NOT be."
+        else
+	    as_user "echo rsync \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+	fi
+    else
+        echo "This server does not run in a ramdisk."
+    fi
 }
 
 function mc_backup() {
@@ -319,6 +351,12 @@ case "${2}" in
 #    mc_update
 #    mc_start
 #    ;;
+  s-to-ramd)
+     sync_to_ramdisk
+     ;;
+  s-from-ramd)
+     sync_from_ramdisk
+     ;;
   backup)
     mc_saveoff
     mc_backup
@@ -346,6 +384,8 @@ COMMANDS
     stop                  Stop the server.
     restart               Restart the server.
     backup                Backup the server.
+    s-to-ramd		  Sync server contents from SERVERDIR_PRERUN("${SERVERDIR_PRERUN}") to SERVERDIR("${SERVERDIR}")
+    s-from-ramd		  Sync server contents from SERVERDIR("${SERVERDIR}") to SERVERDIR_PRERUN("${SERVERDIR_PRERUN}")
     listbackups           List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
     status                Prints current status of the server (online/offline)
     sendcommand|sc|c      Send command to the server given as [ARGUMENT]
