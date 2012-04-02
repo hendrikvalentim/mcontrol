@@ -94,6 +94,8 @@ function is_running() {
 }
 
 function mc_start() {
+# Add checks if ramdis and if ismounted...
+
   if is_running 
   then
     echo "Tried to start but ${JAR_FILE} is already running!"
@@ -196,8 +198,7 @@ function mc_stop() {
 
 # If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
 function sync_to_ramdisk() {
-
-#FIXME check if SERVERDIR_PRERUN is set and valid
+#FIXME add check is FIXME is mounted before starting a server.
 
     if is_ramdisk
     then
@@ -209,7 +210,7 @@ function sync_to_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
             else
-	        as_user "rsync -a \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+	        as_user "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
             fi
 	fi
     else
@@ -229,7 +230,7 @@ function sync_from_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
 	    else
-	        as_user "rsync -a \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+	        as_user "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	    fi
 	fi
     else
