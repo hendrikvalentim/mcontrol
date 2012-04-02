@@ -209,7 +209,7 @@ function sync_to_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
             else
-	        as_user "echo rsync \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+	        as_user "rsync -a \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
             fi
 	fi
     else
@@ -229,7 +229,7 @@ function sync_from_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
 	    else
-	        as_user "echo rsync \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+	        as_user "rsync -a \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	    fi
 	fi
     else
