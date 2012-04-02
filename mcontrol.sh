@@ -48,7 +48,6 @@ INVOCATION="java -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${
 
 #        #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
-
 # This is an easy implementation of quota:
 #  - check size of all backups with du -s ...
 #  - if size>quota, then start remove-loop and remove so long the oldest backup, until size<=quota
@@ -206,7 +205,12 @@ function sync_to_ramdisk() {
         then
 	    echo "Error, SERVERDIR_PRERUN(${SERVERDIR_PRERUN}) is empty, it sould NOT be."
 	else
-	    as_user "echo rsync \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+	    if is_running
+	    then
+	        echo "Server is running; stop it before syncing."
+            else
+	        as_user "echo rsync \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+            fi
 	fi
     else
         echo "This server does not run in a ramdisk."
@@ -221,7 +225,12 @@ function sync_from_ramdisk() {
 	then
 	    echo "Error, SERVERDIR(${SERVERDIR}) is empty, it sould NOT be."
         else
-	    as_user "echo rsync \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+	    if is_running
+	    then
+	        echo "Server is running; stop it before syncing."
+	    else
+	        as_user "echo rsync \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+	    fi
 	fi
     else
         echo "This server does not run in a ramdisk."
