@@ -62,8 +62,8 @@ function trim_to_quota() {
 		echo ""
 		echo "Total backup size of ${_size_of_all_backups} MiB has reached quota of $quota MiB."
 		local _increment_count=$(($(rdiff-backup --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
-		echo "  going to --remove-older-than $((${_increment_count}-1))B"
-		${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
+		echo "  going to --force --remove-older-than $((${_increment_count}-1))B"
+		${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --force --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
 		echo "  Removed."
 		_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
 	done
