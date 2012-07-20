@@ -43,8 +43,11 @@ ID_LIST_NAMES=/home/minecraft/id.list-names
 
 . "${SETTINGS_FILE}"
 
+BIN_JAVA="java"
+BIN_RDIFF="rdiff-backup"
+
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
-INVOCATION="java -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
+INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
 
 #        #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
@@ -61,9 +64,9 @@ function trim_to_quota() {
 	do
 		echo ""
 		echo "Total backup size of ${_size_of_all_backups} MiB has reached quota of $quota MiB."
-		local _increment_count=$(($(rdiff-backup --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
+		local _increment_count=$(($(${BIN_RDIFF} --list-increments ${_backup_dir}| grep -o increments\. | wc -l)-1))
 		echo "  going to --force --remove-older-than $((${_increment_count}-1))B"
-		${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --force --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
+		${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} --force --remove-older-than $((${_increment_count}-1))B "${BACKUPDIR}/${SERVERNAME}-rdiff" >/dev/null 2>&1
 		echo "  Removed."
 		_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
 	done
@@ -277,7 +280,7 @@ function mc_backup() {
 	   as_user "cd && ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 	  ;;
 	rdiff)
-	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} rdiff-backup --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
@@ -290,8 +293,8 @@ function listbackups() {
 		echo "Error: listbackups is only available for usage with rdiff-backup; change BACKUPSYSTEM in \"$0\" or in user-settings-file in order to use rdiff-backup."
 	else
 		echo "Backups for server \"${SERVERNAME}\""
-		rdiff-backup -l "${BACKUPDIR}/${SERVERNAME}-rdiff"
-		rdiff-backup --list-increment-sizes "${BACKUPDIR}/${SERVERNAME}-rdiff"
+		${BIN_RDIFF} -l "${BACKUPDIR}/${SERVERNAME}-rdiff"
+		${BIN_RDIFF} --list-increment-sizes "${BACKUPDIR}/${SERVERNAME}-rdiff"
 	fi
 }
 
