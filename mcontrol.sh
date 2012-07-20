@@ -11,24 +11,14 @@
 # Can be "tar" or "rdiff"
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
 BACKUPSYSTEM="rdiff"
-########### End: Settings ##################
-
-
-
-
-############################################
-##### DO NOT EDIT BELOW THIS LINE ##########
-#This is important to have always the same output format.
-LC_LANG=C
 
 MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages.
 # C or empty for Default.
 
 #Read user settings from /etc/minecraft-server/<username>/<servername>
 SETTINGS_FILE=${1}
-
-#Check if settings file is in /etc/minecraft-server
-#FIXME
+  #Check if settings file is in /etc/minecraft-server and if user has no write permission on it; if not, warn and exit...
+  #FIXME
 
 RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
 RUNSERVER_TASKSET="" #Set CPU affinity of a server with taskset command, e.g. TASKSET="taskset -c 1"
@@ -39,17 +29,23 @@ RUNBACKUP_IONICE="ionice -c 3" #only relevant for backup
 ID_LIST=/home/minecraft/id.list
 ID_LIST_NAMES=/home/minecraft/id.list-names
 
-
-
-. "${SETTINGS_FILE}"
-
 BIN_JAVA="java"
 BIN_RDIFF="rdiff-backup"
+########### End: Settings ##################
+
+
+
+############################################
+##### DO NOT EDIT BELOW THIS LINE ##########
+#This is important to have always the same output format.
+LC_LANG=C
+
+. "${SETTINGS_FILE}"
 
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
 INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
 
-#        #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
+#INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
 # This is an easy implementation of quota:
 #  - check size of all backups with du -s ...
