@@ -12,13 +12,7 @@
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
 BACKUPSYSTEM="rdiff"
 
-MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages.
-# C or empty for Default.
-
-#Read user settings from /etc/minecraft-server/<username>/<servername>
-SETTINGS_FILE=${1}
-  #Check if settings file is in /etc/minecraft-server and if user has no write permission on it; if not, warn and exit...
-  #FIXME
+MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages; C or empty for default.
 
 RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
 RUNSERVER_TASKSET="" #Set CPU affinity of a server with taskset command, e.g. TASKSET="taskset -c 1"
@@ -33,12 +27,15 @@ BIN_JAVA="java"
 BIN_RDIFF="rdiff-backup"
 ########### End: Settings ##################
 
-
-
 ############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
 #This is important to have always the same output format.
 LC_LANG=C
+
+#Read user settings from /etc/minecraft-server/<username>/<servername>
+SETTINGS_FILE=${1}
+  #Check if settings file is in /etc/minecraft-server and if user has no write permission on it; if not, warn and exit...
+  #FIXME
 
 . "${SETTINGS_FILE}"
 
