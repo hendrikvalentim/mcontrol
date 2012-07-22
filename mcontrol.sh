@@ -273,7 +273,12 @@ function mc_backup() {
 	   as_user "cd && ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} tar -cvf '${TAR_FILE}' --exclude='*.log' -g '${TAR_SNAP_FILE}' '${SERVERDIR}' > /dev/null 2>&1"
 	  ;;
 	rdiff)
-	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   local _excludes=""
+	   for i in ${RDIFF_EXCLUDES[@]}
+	   do
+	      _excludes="$_excludes --exclude ${SERVERDIR}/$i"
+	   done
+	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" ${_excludes} "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
@@ -283,7 +288,7 @@ function mc_backup() {
 function listbackups() {
 	if [ "${BACKUPSYSTEM}" != "rdiff" ]
 	then
-		echo "Error: listbackups is only available for usage with rdiff-backup; change BACKUPSYSTEM in \"$0\" or in user-settings-file in order to use rdiff-backup."
+		echo "Error: listbackups is only available for usage with rdiff-backup; change BACKUPSYSTEM in \"$2\" or in user-settings-file in order to use rdiff-backup."
 	else
 		echo "Backups for server \"${SERVERNAME}\""
 		${BIN_RDIFF} -l "${BACKUPDIR}/${SERVERNAME}-rdiff"
