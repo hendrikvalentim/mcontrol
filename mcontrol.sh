@@ -278,7 +278,7 @@ function mc_backup() {
 	   do
 	      _excludes="$_excludes --exclude ${SERVERDIR}/$i"
 	   done
-	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} --exclude "${SERVERDIR}/server.log" --exclude "${SERVERDIR}/plugins/dynmap/web/tiles/" ${_excludes} "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
+	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} ${_excludes} "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
 	   trim_to_quota ${BACKUP_QUOTA_MiB}	
 	  ;;
