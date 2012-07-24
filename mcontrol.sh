@@ -335,6 +335,11 @@ function sendcommand() {
 	fi  
 }
 
+if ["${4}" = "-debug"]; #Show shell trace output...
+then
+    set -x
+fi
+
 #Start-Stop here
 case "${2}" in
   start)
@@ -402,6 +407,7 @@ COMMANDS
     sendcommand|sc|c      Send command to the server given as [ARGUMENT]
     lottery <playername>  Gives a player a random count of a random item. (Player must have a free inventory slot.)
     pid		          Get pid of a server process.
+    -debug		  Must be the last argument. Enables shell trace output (set -x)
 
 EXAMPLES
     Send a message to all players on the server:
