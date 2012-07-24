@@ -10,6 +10,7 @@
 # Default backup system, if not specified in serversettings.
 # Can be "tar" or "rdiff"
 # Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
+
 BACKUPSYSTEM="rdiff"
 
 MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages; C or empty for default.
@@ -49,7 +50,7 @@ INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} 
 #  - if size>quota, then start remove-loop and remove so long the oldest backup, until size<=quota
 #   sooo einfach :)
 function trim_to_quota() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
 	local quota=$1
 	local _backup_dir="${BACKUPDIR}/${SERVERNAME}-rdiff"
 	_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
@@ -69,12 +70,12 @@ function trim_to_quota() {
 
 #Checks, if the serverdir is inside a ramdisk (tmpfs mountpoint)
 function is_ramdisk() {
-    [ ${DODEBUG}="1" ] && set -x
+    [ ${DODEBUG} -eq 1 ] && set -x
     stat -f ${SERVERDIR} | grep tmpfs >/dev/null 2>&1
 }
 
 function as_user() {
-  [ ${DODEBUG}="1" ] && set -x
+  [ ${DODEBUG} -eq 1 ] && set -x
   if [ "$(whoami)" = "${RUNAS}" ] ; then
     /bin/bash -c "$1" 
   else
@@ -83,7 +84,7 @@ function as_user() {
 }
 
 function is_running() {
-   [ ${DODEBUG}="1" ] && set -x
+   [ ${DODEBUG} -eq 1 ] && set -x
    if ps aux | grep -v grep | grep SCREEN | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
    then
      return 0 #is running, exit level 0 for everythings fine...
@@ -94,7 +95,7 @@ function is_running() {
 }
 
 function mc_start() {
-  [ ${DODEBUG}="1" ] && set -x
+  [ ${DODEBUG} -eq 1 ] && set -x
 # Add checks if ramdis and if ismounted...
 
   if is_running 
@@ -119,7 +120,7 @@ function mc_start() {
 }
 
 function mc_saveoff() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
         if is_running
 	then
 		echo "${JAR_FILE} is running... suspending saves"
@@ -134,7 +135,7 @@ function mc_saveoff() {
 }
 
 function mc_saveon() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
  	if is_running
 	then
 		echo "${JAR_FILE} is running... re-enabling saves"
@@ -146,7 +147,7 @@ function mc_saveon() {
 }
 
 function get_server_pid() {
-                [ ${DODEBUG}="1" ] && set -x
+                [ ${DODEBUG} -eq 1 ] && set -x
 		#get pid of screen
 		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
 
@@ -161,7 +162,7 @@ function get_server_pid() {
 
 # After this function the server must be offline; if not you get serious problems :P
 function mc_stop() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
         if is_running
         then
 		#Give the server some time to shutdown itself.
@@ -204,7 +205,7 @@ function mc_stop() {
 # If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
 function sync_to_ramdisk() {
 #FIXME add check is FIXME is mounted before starting a server.
-    [ ${DODEBUG}="1" ] && set -x
+    [ ${DODEBUG} -eq 1 ] && set -x
     if is_ramdisk
     then
         if [ -z "$(ls -A ${SERVERDIR_PRERUN})" ];
@@ -225,7 +226,7 @@ function sync_to_ramdisk() {
 
 # If a server runs in a ramdisk, copy the content of SERVERDIR to SERVERDIR_PRERUN
 function sync_from_ramdisk() {
-    [ ${DODEBUG}="1" ] && set -x
+    [ ${DODEBUG} -eq 1 ] && set -x
     if is_ramdisk
     then
         if [ -z "$(ls -A ${SERVERDIR})" ];
@@ -245,7 +246,7 @@ function sync_from_ramdisk() {
 }
 
 function mc_backup() {
-   [ ${DODEBUG}="1" ] && set -x
+   [ ${DODEBUG} -eq 1 ] && set -x
    [ -d "${BACKUPDIR}" ] || mkdir -p "${BACKUPDIR}"
    echo "Backing up ${MCSERVERID}."
 
@@ -297,7 +298,7 @@ function mc_backup() {
 }
 
 function listbackups() {
-    [ ${DODEBUG}="1" ] && set -x
+    [ ${DODEBUG} -eq 1 ] && set -x
 	if [ "${BACKUPSYSTEM}" != "rdiff" ]
 	then
 		echo "Error: listbackups is only available for usage with rdiff-backup; change BACKUPSYSTEM in \"$2\" or in user-settings-file in order to use rdiff-backup."
@@ -311,7 +312,7 @@ function listbackups() {
 
 # Returns output like "2 9", which means: ID:2, 9 times.
 function lottery_rand() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
 	local _max_item_count=10
 	local anzahl_items=$(wc -l ${ID_LIST} | cut -d' ' -f 1)
 
@@ -324,7 +325,7 @@ function lottery_rand() {
 
 #Gives a named player the items from lottery_rand().
 function lottery() {
-    [ ${DODEBUG}="1" ] && set -x
+    [ ${DODEBUG} -eq 1 ] && set -x
     local zeugs=$(lottery_rand)
     local give_id=$(echo $zeugs | cut -d' ' -f1)
     local give_count=$(echo $zeugs | cut -d' ' -f2)
@@ -343,18 +344,21 @@ function lottery() {
 }
 
 function sendcommand() {
-        [ ${DODEBUG}="1" ] && set -x
+        [ ${DODEBUG} -eq 1 ] && set -x
 	if is_running
         then
                 screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${1}\r")"
 	fi  
 }
 
-if [ "${_}" = "-debug" ]; #Show shell trace output...
+
+echo "$@" > /dev/null 2>&1 #$_ doesn't work without this :/ FIXME
+if [ "$_" = '-debug' ]; #Show shell trace output...
 then
     DODEBUG=1
+else
+    DODEBUG=0
 fi
-
 #Start-Stop here
 case "${2}" in
   start)
