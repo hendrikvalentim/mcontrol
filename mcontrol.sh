@@ -421,7 +421,7 @@ COMMANDS
     backup                Backup the server.
     s-to-ramd		  Sync server contents from SERVERDIR_PRERUN("${SERVERDIR_PRERUN}") to SERVERDIR("${SERVERDIR}")
     s-from-ramd		  Sync server contents from SERVERDIR("${SERVERDIR}") to SERVERDIR_PRERUN("${SERVERDIR_PRERUN}")
-    listbackups           List current inkremental backups (only available for BACKUPSYSTEM="rdiff").
+    listbackups           List current incremental backups (only available for BACKUPSYSTEM="rdiff").
     status                Prints current status of the server (online/offline)
     sendcommand|sc|c      Send command to the server given as [ARGUMENT]
     lottery <playername>  Gives a player a random count of a random item. (Player must have a free inventory slot.)
