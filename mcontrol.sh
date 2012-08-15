@@ -26,7 +26,19 @@ ID_LIST_NAMES=/home/minecraft/id.list-names
 
 BIN_JAVA="java"
 BIN_RDIFF="rdiff-backup"
+
+PRINT_COUNTTOWN="true" #If true, prints 'SAY_SERVER_STOP_COUNTDOWN resttime' to the server on shutdown.
+
+#Strings
+SAY_BACKUP_START="Server-Backup wird gestartet."
+SAY_BACKUP_FINISHED="Server-Backup ist fertig."
+SAY_SERVER_STOP="Server wird in ${WAITTIME_BEFORE_SHUTDOWN} Sekunden heruntergefahren. Karte wird gesichert..."
+
+SAY_SERVER_STOP_COUNTDOWN="Zeit bis zum Herunterfahren des Servers: ${TIME_UNTIL} Sekunden" #You can use ${TIME_UNTIL} which will contain
+# the time in secs until shutdown
+
 ########### End: Settings ##################
+
 
 ############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
@@ -42,6 +54,8 @@ SETTINGS_FILE=${1}
 
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
 INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
+
+WAITTIME_BEFORE_SHUTDOWN=10 #After warning "server shutdown" wait this time before shutdown.
 
 #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
@@ -124,7 +138,7 @@ function mc_saveoff() {
         if is_running
 	then
 		echo "${JAR_FILE} is running... suspending saves"
-		as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say Server-Backup wird gestartet.\"\015'"
+		as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
                 sync
@@ -140,7 +154,7 @@ function mc_saveon() {
 	then
 		echo "${JAR_FILE} is running... re-enabling saves"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-on\"\015'"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say Server-Backup ist fertig.\"\015'"
+                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_FINISHED}\"\015'"
 	else
                 echo "${JAR_FILE} was not running. Not resuming saves."
 	fi
@@ -150,7 +164,6 @@ function get_server_pid() {
                 [ ${DODEBUG} -eq 1 ] && set -x
 		#get pid of screen
 		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-
 
 		if [ ! -z "$pid_server_screen" ]
 		then
@@ -167,9 +180,21 @@ function mc_stop() {
         then
 		#Give the server some time to shutdown itself.
                 echo "${JAR_FILE} is running... stopping."
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say Server wird in 10 Sekunden heruntergefahren. Map wird gesichert...\"\015'"
+                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP}\"\015'"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
-                sleep 10
+                #
+
+		if [ ${PRINT_COUNTTOWN} = "true" ]; then
+		    for i in $(seq 1 ${WAITTIME_BEFORE_SHUTDOWN});
+		    do
+			sleep 1
+			local TIME_UNTIL=((${WAITTIME_BEFORE_SHUTDOWN}-${i}))
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP_COUNTDOWN}\"\015'"
+		    done
+		else
+		    sleep ${WAITTIME_BEFORE_SHUTDOWN}
+		fi
+
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"stop\"\015'"
                 sleep 7
         else
