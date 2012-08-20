@@ -34,8 +34,7 @@ SAY_BACKUP_START="Server-Backup wird gestartet."
 SAY_BACKUP_FINISHED="Server-Backup ist fertig."
 SAY_SERVER_STOP="Server wird in ${WAITTIME_BEFORE_SHUTDOWN} Sekunden heruntergefahren. Karte wird gesichert..."
 
-SAY_SERVER_STOP_COUNTDOWN="Zeit bis zum Herunterfahren des Servers: ${TIME_UNTIL} Sekunden" #You can use ${TIME_UNTIL} which will contain
-# the time in secs until shutdown
+SAY_SERVER_STOP_COUNTDOWN="Zeit bis zum Herunterfahren des Servers: "
 
 ########### End: Settings ##################
 
@@ -188,8 +187,8 @@ function mc_stop() {
 		    for i in $(seq 1 ${WAITTIME_BEFORE_SHUTDOWN});
 		    do
 			sleep 1
-			local TIME_UNTIL=((${WAITTIME_BEFORE_SHUTDOWN}-${i}))
-			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP_COUNTDOWN}\"\015'"
+			let TIME_UNTIL="${WAITTIME_BEFORE_SHUTDOWN}-${i}"
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP_COUNTDOWN} ${TIME_UNTIL}\"\015'"
 		    done
 		else
 		    sleep ${WAITTIME_BEFORE_SHUTDOWN}
