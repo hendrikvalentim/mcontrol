@@ -32,9 +32,9 @@ PRINT_COUNTTOWN="true" #If true, prints 'SAY_SERVER_STOP_COUNTDOWN resttime' to 
 #Strings
 SAY_BACKUP_START="Server-Backup wird gestartet."
 SAY_BACKUP_FINISHED="Server-Backup ist fertig."
-SAY_SERVER_STOP="Server wird in ${WAITTIME_BEFORE_SHUTDOWN} Sekunden heruntergefahren. Karte wird gesichert..."
+SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird gesichert." ###sec### will be replaced by time to shutdown
 
-SAY_SERVER_STOP_COUNTDOWN="Zeit bis zum Herunterfahren des Servers: "
+SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
 
 ########### End: Settings ##################
 
@@ -179,7 +179,8 @@ function mc_stop() {
         then
 		#Give the server some time to shutdown itself.
                 echo "${JAR_FILE} is running... stopping."
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP}\"\015'"
+		local _say=$(echo ${SAY_SERVER_STOP} | sed "s/###sec###/${WAITTIME_BEFORE_SHUTDOWN}/")
+                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
                 as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
                 #
 
@@ -188,7 +189,8 @@ function mc_stop() {
 		    do
 			sleep 1
 			let TIME_UNTIL="${WAITTIME_BEFORE_SHUTDOWN}-${i}"
-			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_SERVER_STOP_COUNTDOWN} ${TIME_UNTIL}\"\015'"
+			local _say=$(echo ${SAY_SERVER_STOP_COUNTDOWN} | sed "s/###sec###/${TIME_UNTIL}/")
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
 		    done
 		else
 		    sleep ${WAITTIME_BEFORE_SHUTDOWN}
