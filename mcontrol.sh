@@ -35,7 +35,7 @@ SAY_BACKUP_FINISHED="Server-Backup ist fertig."
 SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird gesichert." ###sec### will be replaced by time to shutdown
 
 SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
-TERMUXER="tmux"             # Can be screen or tmux
+TERMUXER="screen"             # Can be screen or tmux
 
 ########### End: Settings ##################
 
@@ -99,13 +99,17 @@ function as_user() {
 
 function is_running() {
    [ ${DODEBUG} -eq 1 ] && set -x
-   if ps aux | grep -v grep | grep ${TERMUXER} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+   if [ "${TERMUXER}" = "screen" ]; then
+       local _grepit="SCREEN" #need to be upper case
+   else
+       local _grepit="tmux" #need to be lower case
+   fi
+   if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
    then
      return 0 #is running, exit level 0 for everythings fine...
    else
      return 1 #is not running
    fi
-
 }
 
 function mc_start() {
