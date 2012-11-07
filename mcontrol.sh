@@ -35,6 +35,7 @@ SAY_BACKUP_FINISHED="Server-Backup ist fertig."
 SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird gesichert." ###sec### will be replaced by time to shutdown
 
 SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
+TERMUXER="tmux"             # Can be screen or tmux
 
 ########### End: Settings ##################
 
@@ -98,7 +99,7 @@ function as_user() {
 
 function is_running() {
    [ ${DODEBUG} -eq 1 ] && set -x
-   if ps aux | grep -v grep | grep SCREEN | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+   if ps aux | grep -v grep | grep ${TERMUXER} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
    then
      return 0 #is running, exit level 0 for everythings fine...
    else
@@ -120,7 +121,12 @@ function mc_start() {
   else
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
-    as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
+    
+    if [ "${TERMUXER}" = "screen" ]; then
+        as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
+    else
+        as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && tmux new-session -s ${MCSERVERID} -d ""'""${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}""'"
+    fi
     sleep 3
 
     if is_running
@@ -137,9 +143,20 @@ function mc_saveoff() {
         if is_running
 	then
 		echo "${JAR_FILE} is running... suspending saves"
-		as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+
+    		if [ "${TERMUXER}" = "screen" ]; then
+		    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+		else
+		    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_START}\"'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			
+                    as_user "tmux send-keys -t ${MCSERVERID} 'save-off'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+                    as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+		fi 
                 sync
 		sleep 10
 	else
@@ -152,8 +169,15 @@ function mc_saveon() {
  	if is_running
 	then
 		echo "${JAR_FILE} is running... re-enabling saves"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-on\"\015'"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_FINISHED}\"\015'"
+    		if [ "${TERMUXER}" = "screen" ]; then
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-on\"\015'"
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_FINISHED}\"\015'"
+		else
+                    as_user "tmux send-keys -t ${MCSERVERID} 'save-on'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+                    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_FINISHED}\"'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+		fi
 	else
                 echo "${JAR_FILE} was not running. Not resuming saves."
 	fi
@@ -162,8 +186,11 @@ function mc_saveon() {
 function get_server_pid() {
                 [ ${DODEBUG} -eq 1 ] && set -x
 		#get pid of screen
-		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-
+    		if [ "${TERMUXER}" = "screen" ]; then
+		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+	  	else
+		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+		fi
 		if [ ! -z "$pid_server_screen" ]
 		then
 		    #We use one screen per server, get all processes with ppid of pid_server_screen
@@ -180,8 +207,15 @@ function mc_stop() {
 		#Give the server some time to shutdown itself.
                 echo "${JAR_FILE} is running... stopping."
 		local _say=$(echo ${SAY_SERVER_STOP} | sed "s/###sec###/${WAITTIME_BEFORE_SHUTDOWN}/")
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+    		if [ "${TERMUXER}" = "screen" ]; then
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
+                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+		else
+                    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'"
+  		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+                    as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
+                    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+		fi 
                 #
 
 		if [ ${PRINT_COUNTTOWN} = "true" ]; then
@@ -190,13 +224,26 @@ function mc_stop() {
 			sleep 1
 			let TIME_UNTIL="${WAITTIME_BEFORE_SHUTDOWN}-${i}"
 			local _say=$(echo ${SAY_SERVER_STOP_COUNTDOWN} | sed "s/###sec###/${TIME_UNTIL}/")
-			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
+    			if [ "${TERMUXER}" = "screen" ]; then
+			    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
+			else
+			    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'" 
+			    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			fi
+			    
 		    done
 		else
 		    sleep ${WAITTIME_BEFORE_SHUTDOWN}
 		fi
 
-                as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"stop\"\015'"
+    		if [ "${TERMUXER}" = "screen" ]; then
+		    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"stop\"\015'"
+		else
+		    as_user "tmux send-keys -t ${MCSERVERID} 'stop'"
+		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+
+		fi
+	
                 sleep 7
         else
                 echo "${JAR_FILE} was not running."
@@ -217,9 +264,10 @@ function mc_stop() {
 			echo "Check that ... could not kill -9 $pid_server"
 		fi
 
-		#noch laufende Screen-Sitzungen beenden
-		as_user "screen -wipe"
-
+    		if [ "${TERMUXER}" = "screen" ]; then
+		    #noch laufende Screen-Sitzungen beenden
+		    as_user "screen -wipe"
+		fi
 		_count=$(($count+1))
 		if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
 			echo "Server could not be killed... after 10 tries..."
@@ -373,7 +421,12 @@ function sendcommand() {
         [ ${DODEBUG} -eq 1 ] && set -x
 	if is_running
         then
-                screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${1}\r")"
+    		if [ "${TERMUXER}" = "screen" ]; then
+		    screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${1}\r")"
+		else
+		    tmux send-keys -t "$MCSERVERID" "$(printf "${1}")"
+		    tmux send-keys -t "$MCSERVERID" "C-m"
+		fi
 	fi  
 }
 
