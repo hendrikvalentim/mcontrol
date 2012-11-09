@@ -426,10 +426,10 @@ function sendcommand() {
 	if is_running
         then
     		if [ "${TERMUXER}" = "screen" ]; then
-		    screen -S "$MCSERVERID" -p 0 -X stuff "$(printf "${1}\r")"
+		    as_user "screen -S '$MCSERVERID' -p 0 -X stuff $(printf ${1}\r)"
 		else
-		    tmux send-keys -t "$MCSERVERID" "$(printf "${1}")"
-		    tmux send-keys -t "$MCSERVERID" "C-m"
+		    as_user "tmux send-keys -t '$MCSERVERID' '${1}'"
+		    as_user "tmux send-keys -t '$MCSERVERID' C-m"
 		fi
 	fi  
 }
