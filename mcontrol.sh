@@ -37,6 +37,7 @@ SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird 
 SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
 TERMUXER="screen"             # Can be screen or tmux
 
+WAIT_BEFORE_KILL=10
 ########### End: Settings ##################
 
 
@@ -248,7 +249,7 @@ function mc_stop() {
 
 		fi
 	
-                sleep 7
+                sleep ${WAIT_BEFORE_KILL}
         else
                 echo "${JAR_FILE} was not running."
         fi
