@@ -101,16 +101,21 @@ function as_user() {
 function is_running() {
    [ ${DODEBUG} -eq 1 ] && set -x
    if [ "${TERMUXER}" = "screen" ]; then
-       local _grepit="SCREEN" #need to be upper case
+       local _grepit="SCREEN" #needs to be upper case
+       if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+       then
+         return 0 #is running, exit level 0 for everythings fine...
+       else
+         return 1 #is not running
+       fi  
    else
-       local _grepit="tmux" #need to be lower case
-   fi
-   if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-   then
-     return 0 #is running, exit level 0 for everythings fine...
-   else
-     return 1 #is not running
-   fi
+       if $(tmux list-sessions | grep -v grep | grep "^${MCSERVERID}" >/dev/null 2>&1)
+       then
+         return 0 #is running, exit level 0 for everythings fine...
+       else
+         return 1 #is not running
+       fi  
+   fi  
 }
 
 function mc_start() {
