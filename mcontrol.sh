@@ -36,8 +36,7 @@ SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird 
 
 SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
 TERMUXER="screen"             # Can be screen or tmux
-
-WAIT_BEFORE_KILL=10
+WAIT_BEFORE_KILL=30
 ########### End: Settings ##################
 
 
@@ -100,22 +99,33 @@ function as_user() {
 
 function is_running() {
    [ ${DODEBUG} -eq 1 ] && set -x
-   if [ "${TERMUXER}" = "screen" ]; then
-       local _grepit="SCREEN" #needs to be upper case
-       if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-       then
-         return 0 #is running, exit level 0 for everythings fine...
-       else
-         return 1 #is not running
-       fi  
+   local _server_pid=$(get_server_pid)
+   
+   if [ ! -z "${_server_pid}" ]
+   then
+      return 0
    else
-       if $(tmux list-sessions | grep -v grep | grep "^${MCSERVERID}" >/dev/null 2>&1)
-       then
-         return 0 #is running, exit level 0 for everythings fine...
-       else
-         return 1 #is not running
-       fi  
-   fi  
+      return 1
+   fi
+
+#    if [ "${TERMUXER}" = "screen" ]; then
+#        local _grepit="SCREEN" #need to be upper case
+#        if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+#        then
+#          return 0 #is running, exit level 0 for everythings fine...
+#        else
+#          return 1 #is not running
+#        fi
+#    else
+#        local _grepit="tmux" #need to be lower case
+#  
+#        if $(tmux list-sessions | grep -v grep | grep "^${MCSERVERID}" >/dev/null 2>&1) #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+#        then
+#          return 0 #is running, exit level 0 for everythings fine...
+#        else
+#          return 1 #is not running
+#        fi
+#    fi
 }
 
 function mc_start() {
@@ -201,6 +211,8 @@ function get_server_pid() {
 	  	else
 		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
 		fi
+
+		#now use parent pid of muxer to get pid of server
 		if [ ! -z "$pid_server_screen" ]
 		then
 		    #We use one screen per server, get all processes with ppid of pid_server_screen
@@ -253,37 +265,46 @@ function mc_stop() {
 		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
 
 		fi
-	
-                sleep ${WAIT_BEFORE_KILL}
         else
                 echo "${JAR_FILE} was not running."
         fi
 
-	local _count=0
- 	while is_running #If the server is still running, kill it.
-	do
-                echo "${JAR_FILE} could not be shut down... still running."
-		echo "Forcing server to stop ... kill :P ..."
-		local pid_server=$(get_server_pid)
-		echo "Killing pid $pid_server"
-		as_user "kill -9 $pid_server"
-		if [ $? ]
-		then
-			echo "Successfully killed ${JAR_FILE} (pid $pid_server)."
-		else
-			echo "Check that ... could not kill -9 $pid_server"
-		fi
+	if is_running
+	then
+		echo "Server is still running, giving ${WAIT_BEFORE_KILL} seconds to shutdown. Waiting..."
+                sleep ${WAIT_BEFORE_KILL}
+	fi
 
-    		if [ "${TERMUXER}" = "screen" ]; then
-		    #noch laufende Screen-Sitzungen beenden
-		    as_user "screen -wipe"
-		fi
-		_count=$(($count+1))
-		if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
-			echo "Server could not be killed... after 10 tries..."
-			break
-		fi
-        done
+	if is_running
+	then
+		echo "Server is still running, killing now"
+
+		local _count=0
+		while is_running #If the server is still running, kill it.
+		do
+			echo "${JAR_FILE} could not be shut down... still running."
+			echo "Forcing server to stop ... kill :P ..."
+			local pid_server=$(get_server_pid)
+			echo "Killing pid $pid_server"
+			as_user "kill -9 $pid_server"
+			if [ $? ]
+			then
+				echo "Successfully killed ${JAR_FILE} (pid $pid_server)."
+			else
+				echo "Check that ... could not kill -9 $pid_server"
+			fi
+
+			if [ "${TERMUXER}" = "screen" ]; then
+			    #noch laufende Screen-Sitzungen beenden
+			    as_user "screen -wipe"
+			fi
+			_count=$(($count+1))
+			if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
+				echo "Server could not be killed... after 10 tries..."
+				break
+			fi
+		done
+	fi
 }
 
 # If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
