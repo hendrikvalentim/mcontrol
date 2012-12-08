@@ -304,6 +304,8 @@ function mc_stop() {
 				break
 			fi
 		done
+	else
+		echo "Server managed to shutdown cleanly."
 	fi
 }
 
