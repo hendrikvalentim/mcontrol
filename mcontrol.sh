@@ -203,22 +203,45 @@ function mc_saveon() {
 	fi
 }
 
+#function get_server_pid() {
+#                [ ${DODEBUG} -eq 1 ] && set -x
+#		#get pid of screen
+#    		if [ "${TERMUXER}" = "screen" ]; then
+#		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+#	  	else
+#		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+#		fi
+#
+#		#now use parent pid of muxer to get pid of server
+#		if [ ! -z "$pid_server_screen" ]
+#		then
+#		    #We use one screen per server, get all processes with ppid of pid_server_screen
+#		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2) 
+#		    echo ${pid_server}
+#		fi
+#}
+
 function get_server_pid() {
                 [ ${DODEBUG} -eq 1 ] && set -x
-		#get pid of screen
-    		if [ "${TERMUXER}" = "screen" ]; then
-		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-	  	else
-		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-		fi
+                #get pid of screen
+                if [ "${TERMUXER}" = "screen" ]; then
+                    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+                else
+                    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+                fi      
 
-		#now use parent pid of muxer to get pid of server
-		if [ ! -z "$pid_server_screen" ]
-		then
-		    #We use one screen per server, get all processes with ppid of pid_server_screen
-		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2) 
-		    echo ${pid_server}
-		fi
+                #now use parent pid of muxer to get pid of server
+                if [ ! -z "$pid_server_screen" ]
+                then
+                    #We use one screen per server, get all processes with ppid of pid_server_screen
+                    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)    
+                    echo ${pid_server}
+                else #second tmux session does not appear in process list, grep for servername if termmuxer is tmux.
+                    if [ "${TERMUXER}" = "tmux" ]; then
+                        local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -v grep | awk '{ print $2 }')
+                        echo ${pid_server}
+                    fi
+                fi
 }
 
 # After this function the server must be offline; if not you get serious problems :P
