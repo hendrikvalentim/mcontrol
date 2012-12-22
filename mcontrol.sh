@@ -107,30 +107,11 @@ function is_running() {
    else
       return 1
    fi
-
-#    if [ "${TERMUXER}" = "screen" ]; then
-#        local _grepit="SCREEN" #need to be upper case
-#        if ps aux | grep -v grep | grep ${_grepit} | grep "${MCSERVERID} " >/dev/null 2>&1 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-#        then
-#          return 0 #is running, exit level 0 for everythings fine...
-#        else
-#          return 1 #is not running
-#        fi
-#    else
-#        local _grepit="tmux" #need to be lower case
-#  
-#        if $(tmux list-sessions | grep -v grep | grep "^${MCSERVERID}" >/dev/null 2>&1) #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-#        then
-#          return 0 #is running, exit level 0 for everythings fine...
-#        else
-#          return 1 #is not running
-#        fi
-#    fi
 }
 
 function mc_start() {
   [ ${DODEBUG} -eq 1 ] && set -x
-# Add checks if ramdis and if ismounted...
+# Add checks if ramdisk and if ismounted...
 
   if is_running 
   then
@@ -203,25 +184,9 @@ function mc_saveon() {
 	fi
 }
 
-#function get_server_pid() {
-#                [ ${DODEBUG} -eq 1 ] && set -x
-#		#get pid of screen
-#    		if [ "${TERMUXER}" = "screen" ]; then
-#		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-#	  	else
-#		    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-#		fi
-#
-#		#now use parent pid of muxer to get pid of server
-#		if [ ! -z "$pid_server_screen" ]
-#		then
-#		    #We use one screen per server, get all processes with ppid of pid_server_screen
-#		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2) 
-#		    echo ${pid_server}
-#		fi
-#}
-
 function get_server_pid() {
+#TODO: Ordentlich fixen fuer tmux
+
                 [ ${DODEBUG} -eq 1 ] && set -x
                 #get pid of screen
                 if [ "${TERMUXER}" = "screen" ]; then
