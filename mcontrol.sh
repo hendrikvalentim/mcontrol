@@ -238,7 +238,7 @@ function get_server_pid() {
                     echo ${pid_server}
                 else #second tmux session does not appear in process list, grep for servername if termmuxer is tmux.
                     if [ "${TERMUXER}" = "tmux" ]; then
-                        local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -v grep | awk '{ print $2 }')
+                        local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
                         echo ${pid_server}
                     fi
                 fi
