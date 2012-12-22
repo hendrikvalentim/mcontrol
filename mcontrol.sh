@@ -160,7 +160,7 @@ function mc_saveon() {
 function get_server_pid() {
         [ ${DODEBUG} -eq 1 ] && set -x
         case "${TERMUXER}" in
-            "screen":
+            "screen")
                 #get pid of screen-session
                 local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }')
                 #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
@@ -172,7 +172,7 @@ function get_server_pid() {
                     echo ${pid_server}
                 fi
                 ;;
-            "tmux":
+            "tmux")
                 #Auf grep tmux kann man sich nicht verlassen, weil nur der erste start von tmux new-session in der prozessliste erscheint (unter Debian).
                 # Daher filtert man zum Erhalt der server pid nach FIXME.
                 local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
