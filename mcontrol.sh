@@ -185,28 +185,27 @@ function mc_saveon() {
 }
 
 function get_server_pid() {
-#TODO: Ordentlich fixen fuer tmux
+        [ ${DODEBUG} -eq 1 ] && set -x
+        case "${TERMUXER}" in
+            "screen":
+                #get pid of screen-session
+                local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }')
+                #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
 
-                [ ${DODEBUG} -eq 1 ] && set -x
-                #get pid of screen
-                if [ "${TERMUXER}" = "screen" ]; then
-                    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-                else
-                    local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep tmux | grep "${MCSERVERID} "  | awk '{ print $1 }') #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
-                fi      
-
-                #now use parent pid of muxer to get pid of server
-                if [ ! -z "$pid_server_screen" ]
+                if [ ! -z "$pid_server_screen" ] #use pid of screen-session to get pid of running command in the session
                 then
                     #We use one screen per server, get all processes with ppid of pid_server_screen
-                    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)    
+                    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)
                     echo ${pid_server}
-                else #second tmux session does not appear in process list, grep for servername if termmuxer is tmux.
-                    if [ "${TERMUXER}" = "tmux" ]; then
-                        local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
-                        echo ${pid_server}
-                    fi
                 fi
+                ;;
+            "tmux":
+                #Auf grep tmux kann man sich nicht verlassen, weil nur der erste start von tmux new-session in der prozessliste erscheint (unter Debian).
+                # Daher filtert man zum Erhalt der server pid nach FIXME.
+                local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
+                echo ${pid_server}
+                ;;
+        esac
 }
 
 # After this function the server must be offline; if not you get serious problems :P
@@ -225,8 +224,7 @@ function mc_stop() {
   		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
                     as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
                     as_user "tmux send-keys -t ${MCSERVERID} C-m"
-		fi 
-                #
+                fi
 
 		if [ ${PRINT_COUNTTOWN} = "true" ]; then
 		    for i in $(seq 1 ${WAITTIME_BEFORE_SHUTDOWN});
@@ -255,6 +253,7 @@ function mc_stop() {
 		fi
         else
                 echo "${JAR_FILE} was not running."
+                return 0
         fi
 
 	if is_running
