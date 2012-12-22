@@ -172,10 +172,11 @@ function get_server_pid() {
                     echo ${pid_server}
                 fi
                 ;;
-            "tmux")
+            "tmux") #TODO: FIXME, very tricky :/ und nicht wirklich sinnvoll, funktioniert aber erstmal.
                 #Auf grep tmux kann man sich nicht verlassen, weil nur der erste start von tmux new-session in der prozessliste erscheint (unter Debian).
-                # Daher filtert man zum Erhalt der server pid nach FIXME.
-                local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
+                # Daher filtert man zum Erhalt der server pid nach ... siehe unten...
+                #local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
+                local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | grep 'TMUX=' | grep -v 'tmux$' | awk '{ print $2 }')
                 echo ${pid_server}
                 ;;
         esac
