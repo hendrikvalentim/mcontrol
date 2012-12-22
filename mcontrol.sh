@@ -6,42 +6,15 @@
 # Based on Script taken from http://www.minecraftwiki.net/wiki/Server_startup_script version 0.3.2 2011-01-27 (YYYY-MM-DD)
 # Original License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 
-############# Settings #####################
-# Default backup system, if not specified in serversettings.
-# Can be "tar" or "rdiff"
-# Be sure to install rdiff-backup http://www.nongnu.org/rdiff-backup/ in case of rdiff :)
+######## CONFIG: Set the path to mcontrol.conf in the next line ########
+CONFIG_FILE="/etc/minecraft-server/mcontrol.conf"
+########################################################################
 
-BACKUPSYSTEM="rdiff"
-
-MC_SERVER_LANG="de_DE.UTF-8" #use localized messages (e.g. for AFK Status) for Ingame-Messages; C or empty for default.
-
-RUNSERVER_NICE=""   #run Server with nicelevel (complete command needed, e.g. RUNSERVER_NICE="nice -n19")
-RUNSERVER_TASKSET="" #Set CPU affinity of a server with taskset command, e.g. TASKSET="taskset -c 1"
-
-RUNBACKUP_NICE="nice -n19"   #run Backup with nicelevel (complete command needed, e.g. RUNBACKUP_NICE="nice -n19")
-RUNBACKUP_IONICE="ionice -c 3" #only relevant for backup
-
-ID_LIST=/home/minecraft/id.list
-ID_LIST_NAMES=/home/minecraft/id.list-names
-
-BIN_JAVA="java"
-BIN_RDIFF="rdiff-backup"
-
-PRINT_COUNTTOWN="true" #If true, prints 'SAY_SERVER_STOP_COUNTDOWN resttime' to the server on shutdown.
-
-#Strings
-SAY_BACKUP_START="Server-Backup wird gestartet."
-SAY_BACKUP_FINISHED="Server-Backup ist fertig."
-SAY_SERVER_STOP="Server wird in ###sec### Sekunden heruntergefahren. Karte wird gesichert." ###sec### will be replaced by time to shutdown
-
-SAY_SERVER_STOP_COUNTDOWN="Shutdown des Servers in ###sec### Sekunden." ###sec### will be replaced by remaining time in seconds.
-TERMUXER="screen"             # Can be screen or tmux
-WAIT_BEFORE_KILL=30
-########### End: Settings ##################
-
-
-############################################
 ##### DO NOT EDIT BELOW THIS LINE ##########
+
+#source config file
+. ${CONFIG_FILE}
+
 #This is important to have always the same output format.
 LC_LANG=C
 
