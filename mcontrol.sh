@@ -268,6 +268,12 @@ function mc_stop() {
 	else
 		echo "Server managed to shutdown cleanly."
 	fi
+
+    if is_ramdisk;
+    then
+        echo "Your Server is using a ramdisk, don't forget to do a ramd-to-s before complete server shutdown..."
+    fi  
+
 }
 
 # If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
