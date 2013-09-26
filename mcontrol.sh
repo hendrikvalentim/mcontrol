@@ -284,7 +284,7 @@ function sync_to_ramdisk() {
     then
         if [ -z "$(ls -A ${SERVERDIR_PRERUN})" ];
         then
-	    echo "Error, SERVERDIR_PRERUN(${SERVERDIR_PRERUN}) is empty, it sould NOT be."
+	    echo "Error, SERVERDIR_PRERUN(${SERVERDIR_PRERUN}) is empty, it should NOT be."
 	else
 	    if is_running
 	    then
@@ -305,7 +305,7 @@ function sync_from_ramdisk() {
     then
         if [ -z "$(ls -A ${SERVERDIR})" ];
 	then
-	    echo "Error, SERVERDIR(${SERVERDIR}) is empty, it sould NOT be."
+	    echo "Error, SERVERDIR(${SERVERDIR}) is empty, it should NOT be."
         else
 	    if is_running
 	    then
