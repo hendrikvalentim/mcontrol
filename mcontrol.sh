@@ -315,7 +315,7 @@ function sync_from_ramdisk() {
 	    fi
 	fi
     else
-    	echo "There is no ramdisk mounted in \"${SERVERDIR}\""
+    	echo "There is no ramdisk mounted in \"${SERVERDIR}\". No sync was done."
     fi
 }
 
@@ -452,6 +452,11 @@ case "${2}" in
     ;;
   restart)
     mc_stop
+    mc_start
+    ;;
+  restartandsync) #If SERVERDIR_PRERUN is set, a sync from ram to disk is done after stop and before start (only if restartandsync was invoked)
+    mc_stop
+    sync_from_ramdisk
     mc_start
     ;;
   lottery)
