@@ -290,7 +290,7 @@ function sync_to_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
             else
-                echo "Starting rsync, from ramdisk to disk..."
+                echo "Starting rsync, from disk to ramdisk..."
                 echo "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
 	        as_user "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
             fi
@@ -313,6 +313,8 @@ function sync_from_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
 	    else
+                echo "Starting rsync, from ramdisk to disk..."
+                echo "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	        as_user "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	    fi
 	fi
