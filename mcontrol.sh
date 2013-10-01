@@ -503,6 +503,7 @@ COMMANDS
     start                 Start the server.
     stop                  Stop the server.
     restart               Restart the server.
+    restartandsync        Restart the server and do a sync from ramdisk to disk after stopping and before starting the server.
     backup                Backup the server.
     s-to-ramd		  Sync server contents from SERVERDIR_PRERUN("${SERVERDIR_PRERUN}") to SERVERDIR("${SERVERDIR}")
     s-from-ramd		  Sync server contents from SERVERDIR("${SERVERDIR}") to SERVERDIR_PRERUN("${SERVERDIR_PRERUN}")
