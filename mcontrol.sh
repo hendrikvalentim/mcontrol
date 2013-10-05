@@ -58,7 +58,7 @@ function trim_to_quota() {
 #Checks, if the serverdir is inside a ramdisk (tmpfs mountpoint)
 function is_ramdisk() {
     [ ${DODEBUG} -eq 1 ] && set -x
-    stat -f ${SERVERDIR} | grep tmpfs >/dev/null 2>&1
+    stat -f ${SERVERDIR} | grep -E 'tmpfs|ramfs' >/dev/null 2>&1
 }
 
 function as_user() {
