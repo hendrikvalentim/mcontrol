@@ -29,7 +29,7 @@ MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send comm
 INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
 
 WAITTIME_BEFORE_SHUTDOWN=10 #After warning "server shutdown" wait this time before shutdown.
-
+DO_SYNC_ON_STOP=true
 #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
 # This is an easy implementation of quota:
@@ -271,7 +271,13 @@ function mc_stop() {
 
     if is_ramdisk;
     then
-        echo "Your Server is using a ramdisk, don't forget to do a ramd-to-s before complete server shutdown..."
+        if [ ${DO_SYNC_ON_STOP} = "true" ];
+        then
+            echo "Your server is running in a ramdisk, syncing now back to harddisk"
+            sync_from_ramdisk
+        else
+            echo "Your Server is using a ramdisk, don't forget to run s_from_ramd before complete server shutdown..."
+        fi
     fi  
 
 }
@@ -313,8 +319,8 @@ function sync_from_ramdisk() {
 	    then
 	        echo "Server is running; stop it before syncing."
 	    else
-                echo "Starting rsync, from ramdisk to disk..."
-                echo "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+            echo "Starting rsync, from ramdisk to disk..."
+            echo "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	        as_user "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	    fi
 	fi
