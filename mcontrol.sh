@@ -268,18 +268,6 @@ function mc_stop() {
 	else
 		echo "Server managed to shutdown cleanly."
 	fi
-
-    if is_ramdisk;
-    then
-        if [ ${DO_SYNC_ON_STOP} = "true" ];
-        then
-            echo "Your server is running in a ramdisk, syncing now back to harddisk"
-            sync_from_ramdisk
-        else
-            echo "Your Server is using a ramdisk, don't forget to run s_from_ramd before complete server shutdown..."
-        fi
-    fi  
-
 }
 
 # If a server runs in a ramdisk, copy the content of SERVERDIR_PRERUN to SERVERDIR
@@ -459,6 +447,16 @@ case "${2}" in
     ;;
   stop)
     mc_stop
+    if is_ramdisk;
+    then
+        if [ ${DO_SYNC_ON_STOP} = "true" ];
+        then
+            echo "Your server is running in a ramdisk, syncing now back to harddisk"
+            sync_from_ramdisk
+        else
+            echo "Your Server is using a ramdisk, don't forget to run s_from_ramd before complete server shutdown..."
+        fi
+    fi  
     ;;
   restart)
     mc_stop
