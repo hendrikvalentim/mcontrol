@@ -15,9 +15,6 @@ CONFIG_FILE="/etc/minecraft-server/mcontrol.conf"
 #source config file
 . ${CONFIG_FILE}
 
-LOGDIR="${SERVERDIR}/logs" #Default value... can be overriden later (SETTINGS_FILE=...)
-LOGFILENAME="server.log" #Default value... can be overriden later ...
-
 #This is important to have always the same output format.
 LC_LANG=C
 
@@ -87,6 +84,9 @@ function is_running() {
 
 
 function savelog() {
+    [ -z "$LOGDIR" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+    [ -z "$LOGFILENAME" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+
     if [ ! -d "${LOGDIR}" ];
     then
         mkdir "${LOGDIR}"
@@ -96,7 +96,7 @@ function savelog() {
     
     if [ -f ${LOGFILE} ];
     then
-        mv "${SERVERDIR}/${LOGFILENAME}" "${LOGDIR}/${LOGFILENAME}_${date}"
+        as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${LOGDIR}/${LOGFILENAME}_${_date}\""
     fi
 }
 
@@ -139,21 +139,21 @@ function mc_saveoff() {
 
     		if [ "${TERMUXER}" = "screen" ]; then
 		    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+            as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
+            as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
 		else
 		    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_START}\"'"
 		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
 			
-                    as_user "tmux send-keys -t ${MCSERVERID} 'save-off'"
+            as_user "tmux send-keys -t ${MCSERVERID} 'save-off'"
 		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-                    as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
+            as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
 		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
 		fi 
-                sync
+            sync
 		sleep 10
 	else
-                echo "${JAR_FILE} was not running. Not suspending saves."
+            echo "${JAR_FILE} was not running. Not suspending saves."
 	fi
 }
 
