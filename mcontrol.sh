@@ -88,8 +88,8 @@ function is_running() {
 
 
 function savelog() {
-	[ -z "$LOGDIR" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
-	[ -z "$LOGFILENAME" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+	[ -z "${LOGDIR}" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+	[ -z "${LOGFILENAME}" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
 
 	if [ ! -d "${LOGDIR}" ];
 	then
@@ -97,17 +97,20 @@ function savelog() {
 	fi
 
 	_date=$(date "+%Y-%m-%d__%H_%M_%S")
+	_logfileorigin="${SERVERDIR}/${LOGFILENAME}"
 	_logfiledest="${LOGDIR}/${LOGFILENAME}_${_date}"
 
-	if [ -f "${LOGFILE}" ];
+	if [ -f "${_logfileorigin}" ];
 	then
-		as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${_logfiledest}\""
+		as_user "mv \"${_logfileorigin}\" \"${_logfiledest}\""
+
+		if [ "${SAVELOG_DO_COMPRESS}" = "true" ];
+		then
+			as_user "bzip2 -z \"${_logfiledest}\""
+		fi
 	fi
 
-	if [ "${SAVELOG_DO_COMPRESS}" = "true" ];
-	then
-		as_user "bzip2 -z \"${_logfiledest}\""
-	fi
+
 }
 
 function mc_start() {
@@ -533,7 +536,8 @@ case "${2}" in
   pid)
 	get_server_pid
     ;;
-  *)cat << EOHELP
+  *)
+	cat << EOHELP
 Usage: ${0} SETTINGS_FILE COMMAND [ARGUMENT]
 
 COMMANDS
