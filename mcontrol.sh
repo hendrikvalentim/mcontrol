@@ -15,6 +15,9 @@ CONFIG_FILE="/etc/minecraft-server/mcontrol.conf"
 #source config file
 . ${CONFIG_FILE}
 
+LOGDIR="${SERVERDIR}/logs" #Default value... can be overriden later (SETTINGS_FILE=...)
+LOGFILENAME="server.log" #Default value... can be overriden later ...
+
 #This is important to have always the same output format.
 LC_LANG=C
 
@@ -82,6 +85,21 @@ function is_running() {
    fi
 }
 
+
+function savelog() {
+    if [ ! -d "${LOGDIR}" ];
+    then
+        mkdir "${LOGDIR}"
+    fi
+
+    _date=$(date "+%Y-%m-%d__%H_%M_%S")
+    
+    if [ -f ${LOGFILE} ];
+    then
+        mv "${SERVERDIR}/${LOGFILENAME}" "${LOGDIR}/${LOGFILENAME}_${date}"
+    fi
+}
+
 function mc_start() {
   [ ${DODEBUG} -eq 1 ] && set -x
 # Add checks if ramdisk and if ismounted...
@@ -93,6 +111,7 @@ function mc_start() {
   then
     echo "Tried to start but ${DONT_START} exists."
   else
+    savelog
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
     
