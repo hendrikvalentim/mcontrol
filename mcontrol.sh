@@ -37,7 +37,7 @@ DO_SYNC_ON_STOP=true
 #  - if size>quota, then start remove-loop and remove so long the oldest backup, until size<=quota
 #   sooo einfach :)
 function trim_to_quota() {
-        [ ${DODEBUG} -eq 1 ] && set -x
+	[ ${DODEBUG} -eq 1 ] && set -x
 	local quota=$1
 	local _backup_dir="${BACKUPDIR}/${SERVERNAME}-rdiff"
 	_size_of_all_backups=$(($(du -s ${_backup_dir} | cut -f1)/1024))
@@ -64,7 +64,7 @@ function is_ramdisk() {
 function as_user() {
   [ ${DODEBUG} -eq 1 ] && set -x
   if [ "$(whoami)" = "${RUNAS}" ] ; then
-    /bin/bash -c "$1" 
+    /bin/bash -c "$1"
   else
     su - ${RUNAS} -c "$1"
   fi
@@ -73,7 +73,7 @@ function as_user() {
 function is_running() {
    [ ${DODEBUG} -eq 1 ] && set -x
    local _server_pid=$(get_server_pid)
-   
+
    if [ ! -z "${_server_pid}" ]
    then
       return 0
@@ -89,14 +89,14 @@ function savelog() {
 
     if [ ! -d "${LOGDIR}" ];
     then
-        mkdir "${LOGDIR}"
+	mkdir "${LOGDIR}"
     fi
 
     _date=$(date "+%Y-%m-%d__%H_%M_%S")
-    
+
     if [ -f ${LOGFILE} ];
     then
-        as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${LOGDIR}/${LOGFILENAME}_${_date}\""
+	as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${LOGDIR}/${LOGFILENAME}_${_date}\""
     fi
 }
 
@@ -104,7 +104,7 @@ function mc_start() {
   [ ${DODEBUG} -eq 1 ] && set -x
 # Add checks if ramdisk and if ismounted...
 
-  if is_running 
+  if is_running
   then
     echo "Tried to start but ${JAR_FILE} is already running!"
   elif [ -f "${SERVERDIR}/${DONT_START}" ]
@@ -114,11 +114,11 @@ function mc_start() {
     savelog
     echo "${JAR_FILE} is not running... starting."
     cd "${SERVERDIR}"
-    
+
     if [ "${TERMUXER}" = "screen" ]; then
-        as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
+	as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && screen -dmS ${MCSERVERID} ${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}"
     else
-        as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && tmux new-session -s ${MCSERVERID} -d ""'""${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}""'"
+	as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && tmux new-session -s ${MCSERVERID} -d ""'""${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}""'"
     fi
     sleep 3
 
@@ -132,127 +132,127 @@ function mc_start() {
 }
 
 function mc_saveoff() {
-        [ ${DODEBUG} -eq 1 ] && set -x
-        if is_running
+	[ ${DODEBUG} -eq 1 ] && set -x
+	if is_running
 	then
 		echo "${JAR_FILE} is running... suspending saves"
 
-    		if [ "${TERMUXER}" = "screen" ]; then
-		    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
-            as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
-            as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+		if [ "${TERMUXER}" = "screen" ]; then
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_START}\"\015'"
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-off\"\015'"
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
 		else
-		    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_START}\"'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-			
-            as_user "tmux send-keys -t ${MCSERVERID} 'save-off'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-            as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-		fi 
-            sync
+			as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_START}\"'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+
+			as_user "tmux send-keys -t ${MCSERVERID} 'save-off'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+		fi
+	    sync
 		sleep 10
 	else
-            echo "${JAR_FILE} was not running. Not suspending saves."
+	    echo "${JAR_FILE} was not running. Not suspending saves."
 	fi
 }
 
 function mc_saveon() {
-        [ ${DODEBUG} -eq 1 ] && set -x
- 	if is_running
+	[ ${DODEBUG} -eq 1 ] && set -x
+	if is_running
 	then
 		echo "${JAR_FILE} is running... re-enabling saves"
-    		if [ "${TERMUXER}" = "screen" ]; then
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-on\"\015'"
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_FINISHED}\"\015'"
+		if [ "${TERMUXER}" = "screen" ]; then
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-on\"\015'"
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${SAY_BACKUP_FINISHED}\"\015'"
 		else
-                    as_user "tmux send-keys -t ${MCSERVERID} 'save-on'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-                    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_FINISHED}\"'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			as_user "tmux send-keys -t ${MCSERVERID} 'save-on'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			as_user "tmux send-keys -t ${MCSERVERID} 'say \"${SAY_BACKUP_FINISHED}\"'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
 		fi
 	else
-                echo "${JAR_FILE} was not running. Not resuming saves."
+		echo "${JAR_FILE} was not running. Not resuming saves."
 	fi
 }
 
 function get_server_pid() {
-        [ ${DODEBUG} -eq 1 ] && set -x
-        case "${TERMUXER}" in
-            "screen")
-                #get pid of screen-session
-                local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }')
-                #Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
+	[ ${DODEBUG} -eq 1 ] && set -x
+	case "${TERMUXER}" in
+	    "screen")
+		#get pid of screen-session
+		local pid_server_screen=$(ps -o pid,command ax | grep -v grep | grep SCREEN | grep "${MCSERVERID} "  | awk '{ print $1 }')
+		#Das Leerzeichen am Ende des letzten grep, damit lalas1 und lalas1-test unterschieden werden.
 
-                if [ ! -z "$pid_server_screen" ] #use pid of screen-session to get pid of running command in the session
-                then
-                    #We use one screen per server, get all processes with ppid of pid_server_screen
-                    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)
-                    echo ${pid_server}
-                fi
-                ;;
-            "tmux") #TODO: FIXME, very tricky :/ und nicht wirklich sinnvoll, funktioniert aber erstmal.
-                #Auf grep tmux kann man sich nicht verlassen, weil nur der erste start von tmux new-session in der prozessliste erscheint (unter Debian).
-                # Daher filtert man zum Erhalt der server pid nach ... siehe unten...
-                #local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
-                local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | grep 'TMUX=' | grep -v 'tmux$' | awk '{ print $2 }')
-                echo ${pid_server}
-                ;;
-        esac
+		if [ ! -z "$pid_server_screen" ] #use pid of screen-session to get pid of running command in the session
+		then
+		    #We use one screen per server, get all processes with ppid of pid_server_screen
+		    local pid_server=$(ps -o ppid,pid ax | awk '{ print $1,$2 }' | grep "^${pid_server_screen}" | cut -d' ' -f2)
+		    echo ${pid_server}
+		fi
+		;;
+	    "tmux") #TODO: FIXME, very tricky :/ und nicht wirklich sinnvoll, funktioniert aber erstmal.
+		#Auf grep tmux kann man sich nicht verlassen, weil nur der erste start von tmux new-session in der prozessliste erscheint (unter Debian).
+		# Daher filtert man zum Erhalt der server pid nach ... siehe unten...
+		#local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | awk '{ print $2 }')
+		local pid_server=$(ps eaux | grep -i tmux | grep -i ${SERVERNAME} | grep -i "^${RUNAS}"| grep -v grep | grep 'TMUX=' | grep -v 'tmux$' | awk '{ print $2 }')
+		echo ${pid_server}
+		;;
+	esac
 }
 
 # After this function the server must be offline; if not you get serious problems :P
 function mc_stop() {
-        [ ${DODEBUG} -eq 1 ] && set -x
-        if is_running
-        then
+	[ ${DODEBUG} -eq 1 ] && set -x
+	if is_running
+	then
 		#Give the server some time to shutdown itself.
-                echo "${JAR_FILE} is running... stopping."
+		echo "${JAR_FILE} is running... stopping."
 		local _say=$(echo ${SAY_SERVER_STOP} | sed "s/###sec###/${WAITTIME_BEFORE_SHUTDOWN}/")
-    		if [ "${TERMUXER}" = "screen" ]; then
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
-                    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
+		if [ "${TERMUXER}" = "screen" ]; then
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"save-all\"\015'"
 		else
-                    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'"
-  		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-                    as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
-                    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-                fi
+			as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			as_user "tmux send-keys -t ${MCSERVERID} 'save-all'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
+		fi
 
 		if [ ${PRINT_COUNTTOWN} = "true" ]; then
-		    for i in $(seq 1 ${WAITTIME_BEFORE_SHUTDOWN});
-		    do
-			sleep 1
-			let TIME_UNTIL="${WAITTIME_BEFORE_SHUTDOWN}-${i}"
-			local _say=$(echo ${SAY_SERVER_STOP_COUNTDOWN} | sed "s/###sec###/${TIME_UNTIL}/")
-    			if [ "${TERMUXER}" = "screen" ]; then
-			    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
-			else
-			    as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'" 
-			    as_user "tmux send-keys -t ${MCSERVERID} C-m"
-			fi
-			    
-		    done
+			for i in $(seq 1 ${WAITTIME_BEFORE_SHUTDOWN});
+			do
+				sleep 1
+				let TIME_UNTIL="${WAITTIME_BEFORE_SHUTDOWN}-${i}"
+				local _say=$(echo ${SAY_SERVER_STOP_COUNTDOWN} | sed "s/###sec###/${TIME_UNTIL}/")
+				if [ "${TERMUXER}" = "screen" ]; then
+					as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"say ${_say}\"\015'"
+				else
+					as_user "tmux send-keys -t ${MCSERVERID} 'say \"${_say}\"'"
+					as_user "tmux send-keys -t ${MCSERVERID} C-m"
+				fi
+
+			done
 		else
-		    sleep ${WAITTIME_BEFORE_SHUTDOWN}
+			sleep ${WAITTIME_BEFORE_SHUTDOWN}
 		fi
 
-    		if [ "${TERMUXER}" = "screen" ]; then
-		    as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"stop\"\015'"
+		if [ "${TERMUXER}" = "screen" ]; then
+			as_user "screen -p 0 -S ${MCSERVERID} -X eval 'stuff \"stop\"\015'"
 		else
-		    as_user "tmux send-keys -t ${MCSERVERID} 'stop'"
-		    as_user "tmux send-keys -t ${MCSERVERID} C-m"
+			as_user "tmux send-keys -t ${MCSERVERID} 'stop'"
+			as_user "tmux send-keys -t ${MCSERVERID} C-m"
 
 		fi
-        else
-                echo "${JAR_FILE} was not running."
-                return 0
-        fi
+	else
+		echo "${JAR_FILE} was not running."
+		return 0
+	fi
 
 	if is_running
 	then
 		echo "Server is still running, giving ${WAIT_BEFORE_KILL} seconds to shutdown. Waiting..."
-                sleep ${WAIT_BEFORE_KILL}
+		sleep ${WAIT_BEFORE_KILL}
 	fi
 
 	if is_running
@@ -275,8 +275,8 @@ function mc_stop() {
 			fi
 
 			if [ "${TERMUXER}" = "screen" ]; then
-			    #noch laufende Screen-Sitzungen beenden
-			    as_user "screen -wipe"
+				#noch laufende Screen-Sitzungen beenden
+				as_user "screen -wipe"
 			fi
 			_count=$(($count+1))
 			if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
@@ -295,21 +295,21 @@ function sync_to_ramdisk() {
     [ ${DODEBUG} -eq 1 ] && set -x
     if is_ramdisk
     then
-        if [ -z "$(ls -A ${SERVERDIR_PRERUN})" ];
-        then
+	if [ -z "$(ls -A ${SERVERDIR_PRERUN})" ];
+	then
 	    echo "Error, SERVERDIR_PRERUN(${SERVERDIR_PRERUN}) is empty, it should NOT be."
 	else
 	    if is_running
 	    then
-	        echo "Server is running; stop it before syncing."
-            else
-                echo "Starting rsync, from disk to ramdisk..."
-                echo "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
-	        as_user "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
-            fi
+		echo "Server is running; stop it before syncing."
+	    else
+		echo "Starting rsync, from disk to ramdisk..."
+		echo "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+		as_user "rsync -a --delete \"${SERVERDIR_PRERUN}/\" \"${SERVERDIR}\""
+	    fi
 	fi
     else
-        echo "There is no ramdisk mounted in \"${SERVERDIR}\""
+	echo "There is no ramdisk mounted in \"${SERVERDIR}\""
     fi
 }
 
@@ -318,21 +318,21 @@ function sync_from_ramdisk() {
     [ ${DODEBUG} -eq 1 ] && set -x
     if is_ramdisk
     then
-        if [ -z "$(ls -A ${SERVERDIR})" ];
+	if [ -z "$(ls -A ${SERVERDIR})" ];
 	then
 	    echo "Error, SERVERDIR(${SERVERDIR}) is empty, it should NOT be."
-        else
+	else
 	    if is_running
 	    then
-	        echo "Server is running; stop it before syncing."
+		echo "Server is running; stop it before syncing."
 	    else
-            echo "Starting rsync, from ramdisk to disk..."
-            echo "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
-	        as_user "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+		echo "Starting rsync, from ramdisk to disk..."
+		echo "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
+		as_user "rsync -a --delete \"${SERVERDIR}/\" \"${SERVERDIR_PRERUN}\""
 	    fi
 	fi
     else
-    	echo "There is no ramdisk mounted in \"${SERVERDIR}\". No sync was done."
+	echo "There is no ramdisk mounted in \"${SERVERDIR}\". No sync was done."
     fi
 }
 
@@ -343,7 +343,7 @@ function mc_backup() {
 
 #   if is_ramdisk
 #   then
-##        if 
+##        if
 #   	exit 1
 #   fi
 
@@ -355,7 +355,7 @@ function mc_backup() {
 
 
    case ${BACKUPSYSTEM} in
-        tar)
+	tar)
 	   # Wir erstellen pro Tag ein Unterverzeichnis im Backupverzeichnis. Name ist das Datum. Falls dann quota voll ist, werden ja Verzeichnisse in der Hauptebene geloescht, also dann immer ganze Tagesbackups.
 	   # Wenn fuer den aktuellen Tag noch kein Verzeichnis existiert, dann legen wir es an und machen ein initiales komplettes Backup.
 	   # Existiert der Ordner bereits, dann koennen wir davon ausgehen, dass ein Komplettbackup existiert und auch eine snapshot datei und machen ein inkrementelles Backup.
@@ -383,7 +383,7 @@ function mc_backup() {
 	   done
 	   ${RUNBACKUP_NICE} ${RUNBACKUP_IONICE} ${BIN_RDIFF} ${_excludes} "${SERVERDIR}" "${BACKUPDIR}/${SERVERNAME}-rdiff"
 
-	   trim_to_quota ${BACKUP_QUOTA_MiB}	
+	   trim_to_quota ${BACKUP_QUOTA_MiB}
 	  ;;
    esac
 }
@@ -403,7 +403,7 @@ function listbackups() {
 
 # Returns output like "2 9", which means: ID:2, 9 times.
 function lottery_rand() {
-        [ ${DODEBUG} -eq 1 ] && set -x
+	[ ${DODEBUG} -eq 1 ] && set -x
 	local _max_item_count=10
 	local anzahl_items=$(wc -l ${ID_LIST} | cut -d' ' -f 1)
 
@@ -422,12 +422,12 @@ function lottery() {
     local give_count=$(echo $zeugs | cut -d' ' -f2)
 
     local name=$1
-    
+
     #get name for our item
     #wir brauchen die ID ohne eventuelles :x
     local _cleared_give_id=$(echo ${give_id} | cut -d':' -f1)
     local name_for_id=$(grep "^${_cleared_give_id}:" "${ID_LIST_NAMES}" | cut -d':' -f2)
-    
+
     sendcommand "say Gewinn fuer ${name}: ${give_count} ${name_for_id}($give_id)."
     sendcommand "give ${name} ${zeugs}"
     echo -en "Name: ${name}\nAnzahl: ${give_count}\nBezeichnung(ID): ${name_for_id}(${give_id})\nDone.\n"
@@ -435,17 +435,17 @@ function lottery() {
 }
 
 function sendcommand() {
-        [ ${DODEBUG} -eq 1 ] && set -x
+	[ ${DODEBUG} -eq 1 ] && set -x
 	if is_running
-        then
-    		if [ "${TERMUXER}" = "screen" ]; then
-		    as_user "screen -S $MCSERVERID -p 0 -X stuff '${1}'"
-		    as_user "screen -S $MCSERVERID -p 0 -X stuff $(printf \\r)"
+	then
+		if [ "${TERMUXER}" = "screen" ]; then
+			as_user "screen -S $MCSERVERID -p 0 -X stuff '${1}'"
+			as_user "screen -S $MCSERVERID -p 0 -X stuff $(printf \\r)"
 		else
-		    as_user "tmux send-keys -t '$MCSERVERID' '${1}'"
-		    as_user "tmux send-keys -t '$MCSERVERID' C-m"
+			as_user "tmux send-keys -t '$MCSERVERID' '${1}'"
+			as_user "tmux send-keys -t '$MCSERVERID' C-m"
 		fi
-	fi  
+	fi
 }
 
 
@@ -468,14 +468,14 @@ case "${2}" in
     mc_stop
     if is_ramdisk;
     then
-        if [ ${DO_SYNC_ON_STOP} = "true" ];
-        then
-            echo "Your server is running in a ramdisk, syncing now back to harddisk"
-            sync_from_ramdisk
-        else
-            echo "Your Server is using a ramdisk, don't forget to run s_from_ramd before complete server shutdown..."
-        fi
-    fi  
+	if [ ${DO_SYNC_ON_STOP} = "true" ];
+	then
+	    echo "Your server is running in a ramdisk, syncing now back to harddisk"
+	    sync_from_ramdisk
+	else
+	    echo "Your Server is using a ramdisk, don't forget to run s_from_ramd before complete server shutdown..."
+	fi
+    fi
     ;;
   restart)
     mc_stop
