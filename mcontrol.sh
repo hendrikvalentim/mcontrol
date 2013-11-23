@@ -18,6 +18,10 @@ CONFIG_FILE="/etc/minecraft-server/mcontrol.conf"
 #This is important to have always the same output format.
 LC_LANG=C
 
+# Default values; can be overriden in SETTINGS_FILE
+DO_SYNC_ON_STOP=true
+SAVELOG_DO_COMPRESS=true
+
 #Read user settings from /etc/minecraft-server/<username>/<servername>
 SETTINGS_FILE=${1}
   #Check if settings file is in /etc/minecraft-server and if user has no write permission on it; if not, warn and exit...
@@ -29,7 +33,7 @@ MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send comm
 INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
 
 WAITTIME_BEFORE_SHUTDOWN=10 #After warning "server shutdown" wait this time before shutdown.
-DO_SYNC_ON_STOP=true
+
 #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
 # This is an easy implementation of quota:
@@ -71,33 +75,39 @@ function as_user() {
 }
 
 function is_running() {
-   [ ${DODEBUG} -eq 1 ] && set -x
-   local _server_pid=$(get_server_pid)
+	[ ${DODEBUG} -eq 1 ] && set -x
+	local _server_pid=$(get_server_pid)
 
-   if [ ! -z "${_server_pid}" ]
-   then
-      return 0
-   else
-      return 1
-   fi
+	if [ ! -z "${_server_pid}" ]
+	then
+		return 0
+	else
+		return 1
+	fi
 }
 
 
 function savelog() {
-    [ -z "$LOGDIR" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
-    [ -z "$LOGFILENAME" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+	[ -z "$LOGDIR" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
+	[ -z "$LOGFILENAME" ] && echo "You must set LOGDIR in your server.conf in order to use savelog." && return 1
 
-    if [ ! -d "${LOGDIR}" ];
-    then
-	mkdir "${LOGDIR}"
-    fi
+	if [ ! -d "${LOGDIR}" ];
+	then
+		mkdir "${LOGDIR}"
+	fi
 
-    _date=$(date "+%Y-%m-%d__%H_%M_%S")
+	_date=$(date "+%Y-%m-%d__%H_%M_%S")
+	_logfiledest="${LOGDIR}/${LOGFILENAME}_${_date}"
 
-    if [ -f ${LOGFILE} ];
-    then
-	as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${LOGDIR}/${LOGFILENAME}_${_date}\""
-    fi
+	if [ -f "${LOGFILE}" ];
+	then
+		as_user "mv \"${SERVERDIR}/${LOGFILENAME}\" \"${_logfiledest}\""
+	fi
+
+	if [ "${SAVELOG_DO_COMPRESS}" = "true" ];
+	then
+		as_user "bzip2 -z \"${_logfiledest}\""
+	fi
 }
 
 function mc_start() {
