@@ -1,6 +1,6 @@
 # Minecraft/Craftbukkit control script
 ## Documentation
-The documentation (in german) can be found [here](http://wiki.natenom.name/minecraft/mcontrol).
+The documentation (in german) can be found [here](http://wiki.natenom.de/minecraft/mcontrol).
 
 ## Usage
 Usage: See [here](https://github.com/Natenom/mcontrol/blob/master/mcontrol.sh#L495).
