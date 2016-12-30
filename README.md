@@ -1,4 +1,4 @@
-# Minecraft/Craftbukkit control script
+# Minecraft/Craftbukkit/Spigot control script
 ## Documentation
 The documentation (in German) can be found [here](https://wiki.natenom.de/minecraft/mcontrol).
 
