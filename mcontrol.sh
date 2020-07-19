@@ -7,10 +7,11 @@
 # Original License: Attribution-NonCommercial-ShareAlike 3.0 Unported
 
 ######## CONFIG: Set the path to mcontrol.conf in the next line ########
-CONFIG_FILE="/etc/minecraft-server/mcontrol.conf"
+CONFIG_FILE="/home/ubuntu//mcontrol/mcontrol.conf"
 ########################################################################
 
 ##### DO NOT EDIT BELOW THIS LINE ##########
+EXIT_CODE=0
 
 #source config file
 . ${CONFIG_FILE}
@@ -30,9 +31,8 @@ SETTINGS_FILE=${1}
 . "${SETTINGS_FILE}"
 
 MCSERVERID="mc-server-${RUNAS}-${SERVERNAME}" #Unique ID to be able to send commands to a screen session.
-INVOCATION="${BIN_JAVA} -Xincgc -XX:ParallelGCThreads=$CPU_COUNT -Xmx${MAX_RAM} -jar ${JAR_FILE}"
+INVOCATION="${BIN_JAVA}  -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:MaxGCPauseMillis=100 -XX:+DisableExplicitGC -XX:TargetSurvivorRatio=90 -XX:G1NewSizePercent=50 -XX:G1MaxNewSizePercent=80 -XX:G1MixedGCLiveThresholdPercent=50 -XX:+AlwaysPreTouch -XX:ParallelGCThreads=$CPU_COUNT -Xms${MAX_RAM} -Xmx${MAX_RAM} -jar ${JAR_FILE}"
 
-WAITTIME_BEFORE_SHUTDOWN=10 #After warning "server shutdown" wait this time before shutdown.
 
 #INVOCATION="java -Xmx1024M -Xms1024M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar craftbukkit.jar nogui"
 
@@ -133,13 +133,14 @@ function mc_start() {
     else
 	as_user "export LC_ALL=${MC_SERVER_LANG}; cd ${SERVERDIR} && tmux new-session -s ${MCSERVERID} -d ""'""${RUNSERVER_TASKSET} ${RUNSERVER_NICE} ${INVOCATION}""'"
     fi
-    sleep 3
+    sleep $WAITTIME_BEFORE_UP
 
     if is_running
     then
       echo "${JAR_FILE} is now running."
     else
       echo "Could not start ${JAR_FILE}."
+      EXIT_CODE=1 
     fi
   fi
 }
@@ -259,6 +260,7 @@ function mc_stop() {
 		fi
 	else
 		echo "${JAR_FILE} was not running."
+		EXIT_CODE=1
 		return 0
 	fi
 
@@ -294,6 +296,7 @@ function mc_stop() {
 			_count=$(($count+1))
 			if [ $_count -ge 9 ]; then	#maximal 10 Versuche, den Server zu killen
 				echo "Server could not be killed... after 10 tries..."
+				EXIT_CODE=1
 				break
 			fi
 		done
@@ -527,7 +530,8 @@ case "${2}" in
     then
       echo "${JAR_FILE} is running."
     else
-      echo "${JAR_FILE} is not running."
+      echo "${JAR_FILE} is not running." >&2
+      EXIT_CODE=1
     fi
     ;;
   sendcommand|sc|c)
@@ -568,4 +572,4 @@ EOHELP
   ;;
 esac
 
-exit 0
+exit $EXIT_CODE
